@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Form with Firebase</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Order Form without Image Upload</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -18,14 +18,13 @@
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .form-card label {
+    label {
       display: block;
       margin-top: 10px;
     }
-    .form-card input[type="text"],
-    .form-card input[type="date"],
-    .form-card input[list],
-    .form-card input[type="file"] {
+    input[type="text"],
+    input[type="date"],
+    input[list] {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
@@ -36,12 +35,6 @@
       display: flex;
       gap: 10px;
       margin-top: 5px;
-    }
-    .preview-img {
-      margin-top: 10px;
-      max-width: 100%;
-      height: auto;
-      display: block;
     }
     button {
       margin-top: 20px;
@@ -60,46 +53,39 @@
 <body>
   <h2>Order Form</h2>
   <div class="container">
-    <div class="form-card">
-      <form id="orderForm">
-        <input type="hidden" id="docId" />
-        <label>Team Name</label>
-        <input type="text" id="teamName" required />
+    <form id="orderForm">
+      <input type="hidden" id="docId" />
+      <label>Team Name</label>
+      <input type="text" id="teamName" required />
 
-        <label>Tailor</label>
-        <input list="tailorList" id="tailor" />
-        <datalist id="tailorList"></datalist>
+      <label>Tailor</label>
+      <input list="tailorList" id="tailor" />
+      <datalist id="tailorList"></datalist>
 
-        <label>Status</label>
-        <div class="status-options">
-          <input type="radio" id="received" name="status" value="Received" checked>
-          <label for="received">Received</label>
+      <label>Status</label>
+      <div class="status-options">
+        <input type="radio" id="received" name="status" value="Received" checked />
+        <label for="received">Received</label>
 
-          <input type="radio" id="ongoing" name="status" value="On going">
-          <label for="ongoing">On going</label>
+        <input type="radio" id="ongoing" name="status" value="On going" />
+        <label for="ongoing">On going</label>
 
-          <input type="radio" id="finished" name="status" value="Finished">
-          <label for="finished">Finished</label>
+        <input type="radio" id="finished" name="status" value="Finished" />
+        <label for="finished">Finished</label>
 
-          <input type="radio" id="delivered" name="status" value="Delivered">
-          <label for="delivered">Delivered</label>
-        </div>
+        <input type="radio" id="delivered" name="status" value="Delivered" />
+        <label for="delivered">Delivered</label>
+      </div>
 
-        <label>Due Date</label>
-        <input type="date" id="dueDate" />
+      <label>Due Date</label>
+      <input type="date" id="dueDate" />
 
-        <label>Upload Image</label>
-        <input type="file" id="imageUpload" accept="image/*" />
-        <img id="preview" class="preview-img" />
-
-        <button type="submit">Save</button>
-      </form>
-    </div>
+      <button type="submit">Save</button>
+    </form>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-storage-compat.js"></script>
 
   <script>
     const firebaseConfig = {
@@ -113,20 +99,8 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const storage = firebase.storage();
 
     const orderForm = document.getElementById('orderForm');
-    const preview = document.getElementById('preview');
-    const imageUpload = document.getElementById('imageUpload');
-
-    let imageFile = null;
-
-    imageUpload.addEventListener('change', (e) => {
-      imageFile = e.target.files[0];
-      if (imageFile) {
-        preview.src = URL.createObjectURL(imageFile);
-      }
-    });
 
     orderForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -138,38 +112,20 @@
         const status = document.querySelector('input[name="status"]:checked').value;
         const dueDate = document.getElementById('dueDate').value;
 
-        console.log("Form values:", { teamName, tailor, status, dueDate });
-
-        let imageUrl = preview.src;
-        if (imageFile) {
-          const filename = `images/${Date.now()}_${imageFile.name}`;
-          const storageRef = storage.ref(filename);
-          console.log("Uploading image to:", filename);
-          await storageRef.put(imageFile);
-          imageUrl = await storageRef.getDownloadURL();
-          console.log("Image URL:", imageUrl);
-        }
-
-        const data = { teamName, tailor, status, dueDate, imageUrl };
-        console.log("Final data to save:", data);
+        const data = { teamName, tailor, status, dueDate };
 
         if (docId) {
-          console.log("Updating document ID:", docId);
           await db.collection('orders').doc(docId).update(data);
         } else {
-          console.log("Adding new document to 'orders'");
-          const ref = await db.collection('orders').add(data);
-          console.log("Document created with ID:", ref.id);
+          await db.collection('orders').add(data);
         }
 
         orderForm.reset();
-        preview.src = '';
-        imageFile = null;
         document.getElementById('docId').value = '';
         alert('Order saved successfully.');
       } catch (error) {
-        console.error('❌ Error saving data:', error);
-        alert('An error occurred while saving. Check console for details.');
+        console.error('Error saving data:', error);
+        alert('Error saving data, check console.');
       }
     });
   </script>
