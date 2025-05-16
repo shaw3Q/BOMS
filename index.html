@@ -456,13 +456,32 @@ function updateTailorArtistLists(order) {
 }
 // Fetch all orders, sort by due date ascending
 async function fetchOrders() {
-const snapshot = await db.collection('orders').orderBy('dueDate').get();
-orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-tailorSet.clear();
-artistSet.clear();
-orders.forEach(updateTailorArtistLists);
-filteredOrders = [...orders];
-renderOrders();
+  const snapshot = await db.collection('orders').get();
+  orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  tailorSet.clear();
+  artistSet.clear();
+  orders.forEach(updateTailorArtistLists);
+
+  // Status priority map
+  const statusPriority = {
+    "Received": 1,
+    "On going": 2,
+    "Finished": 3,
+    "Released": 4
+  };
+
+  // Sort by dueDate descending, then status priority ascending
+  orders.sort((a, b) => {
+    const dateA = new Date(a.dueDate || 0);
+    const dateB = new Date(b.dueDate || 0);
+    if (dateA.getTime() !== dateB.getTime()) {
+      return dateB - dateA; // latest first
+    }
+    return (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99);
+  });
+
+  filteredOrders = [...orders];
+  renderOrders();
 }
 
 // Filter by team name
