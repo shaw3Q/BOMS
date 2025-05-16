@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Form with Cloudinary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Order Form with Firebase & Cloudinary</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,8 +13,15 @@
       flex-direction: row;
       gap: 20px;
     }
-    .container {
-      flex: 1;
+    .form-container {
+      flex: 0 0 20%;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .list-container {
+      flex: 0 0 80%;
       background: white;
       padding: 20px;
       border-radius: 8px;
@@ -26,16 +33,17 @@
     }
     .form-card input[type="text"],
     .form-card input[type="date"],
-    .form-card input[list],
     .form-card input[type="file"] {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
       border: 1px solid #ccc;
       border-radius: 4px;
+      box-sizing: border-box;
     }
     .status-options {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
       gap: 10px;
       margin-top: 5px;
     }
@@ -43,10 +51,14 @@
       display: none;
     }
     .status-options label {
-      padding: 5px 10px;
+      padding: 10px;
+      text-align: center;
       border: 1px solid #ccc;
       border-radius: 4px;
       cursor: pointer;
+      background-color: #f0f0f0;
+      user-select: none;
+      transition: background-color 0.3s, color 0.3s;
     }
     .status-options input[type="radio"]:checked + label {
       background-color: #007bff;
@@ -67,12 +79,13 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      width: 100%;
     }
     button:hover {
       background-color: #0056b3;
     }
     table {
-      width: 120%;
+      width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
@@ -80,24 +93,34 @@
       border: 1px solid #ccc;
       padding: 8px;
       text-align: left;
+      vertical-align: middle;
     }
     th {
       background-color: #f0f0f0;
     }
+    img.thumb {
+      max-width: 80px;
+      max-height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .action-buttons button {
+      margin-right: 5px;
+      padding: 5px 8px;
+      font-size: 14px;
+      width: auto;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="form-container">
     <h2>Order Form</h2>
     <div class="form-card">
       <form id="orderForm">
         <input type="hidden" id="docId" />
+
         <label>Team Name</label>
         <input type="text" id="teamName" required />
-
-        <label>Tailor</label>
-        <input list="tailorList" id="tailor" />
-        <datalist id="tailorList"></datalist>
 
         <label>Status</label>
         <div class="status-options">
@@ -121,19 +144,18 @@
         <input type="file" id="imageUpload" accept="image/*" />
         <img id="preview" class="preview-img" />
 
-        <button type="submit">Save</button>
+        <button type="submit" id="saveBtn">Save</button>
       </form>
     </div>
   </div>
 
-  <div class="container">
+  <div class="list-container">
     <h2>Orders</h2>
     <input type="text" id="searchTeam" placeholder="Search team name..." />
     <table id="ordersTable">
       <thead>
         <tr>
           <th>Team</th>
-          <th>Tailor</th>
           <th>Status</th>
           <th>Due Date</th>
           <th>Image</th>
@@ -142,10 +164,266 @@
       </thead>
       <tbody></tbody>
     </table>
+    <div id="pagination" style="margin-top: 10px; text-align: center;"></div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
   <script>
-    document.getElementById('dueDate').valueAsDate = new Date();
-  </script>
-</body>
+    // Firebase config - replace with your own config
+const firebaseConfig = {
+  apiKey: "AIzaSyCWCUiCICoraIkT6QawtM18WenCzm4tBPI",
+  authDomain: "boms-c7893.firebaseapp.com",
+  projectId: "boms-c7893",
+  storageBucket: "boms-c7893.firebasestorage.app",
+  messagingSenderId: "388757655613",
+  appId: "1:388757655613:web:aedd6ba996520d8739da54"
+};
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Cloudinary config
+    const cloudinaryUrl = 'https://api.cloudinary.com/v1_1/dmyne19qj/upload';
+    const cloudinaryUploadPreset = 'upload_preset_boms';
+
+    // Elements
+    const form = document.getElementById('orderForm');
+    const teamNameInput = document.getElementById('teamName');
+    const statusInputs = document.getElementsByName('status');
+    const dueDateInput = document.getElementById('dueDate');
+    const imageUploadInput = document.getElementById('imageUpload');
+    const previewImg = document.getElementById('preview');
+    const docIdInput = document.getElementById('docId');
+    const ordersTableBody = document.querySelector('#ordersTable tbody');
+    const searchTeamInput = document.getElementById('searchTeam');
+    const saveBtn = document.getElementById('saveBtn');
+    const paginationDiv = document.getElementById('pagination');
+
+    // Set default due date = today + 5 days
+    function setDefaultDueDate() {
+      const today = new Date();
+      today.setDate(today.getDate() + 5);
+      dueDateInput.valueAsDate = today;
+    }
+    setDefaultDueDate();
+
+    // Show image preview
+    imageUploadInput.addEventListener('change', () => {
+      const file = imageUploadInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          previewImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previewImg.src = '';
+      }
+    });
+
+    // Pagination variables
+    let currentPage = 1;
+    const limit = 15;
+    let orders = []; // all orders
+
+    // Load orders from Firestore
+    async function loadOrders() {
+      try {
+        const snapshot = await db.collection('orders').orderBy('dueDate').get();
+        orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        displayOrders();
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        alert('Error loading data. Check console.');
+      }
+    }
+
+    // Display orders with pagination and search
+    function displayOrders() {
+      let filteredOrders = orders;
+      const searchTerm = searchTeamInput.value.trim().toLowerCase();
+      if (searchTerm) {
+        filteredOrders = orders.filter(o =>
+          o.teamName.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      const totalPages = Math.ceil(filteredOrders.length / limit);
+      if (currentPage > totalPages) currentPage = totalPages || 1;
+
+      const start = (currentPage - 1) * limit;
+      const paginatedOrders = filteredOrders.slice(start, start + limit);
+
+      ordersTableBody.innerHTML = '';
+      paginatedOrders.forEach(order => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${escapeHtml(order.teamName)}</td>
+          <td>${escapeHtml(order.status)}</td>
+          <td>${order.dueDate ? new Date(order.dueDate.seconds * 1000).toISOString().slice(0,10) : ''}</td>
+          <td>${order.imageUrl ? `<img class="thumb" src="${order.imageUrl}" alt="Image"/>` : ''}</td>
+          <td class="action-buttons">
+            <button onclick="editOrder('${order.id}')">Edit</button>
+            <button onclick="deleteOrder('${order.id}')">Delete</button>
+          </td>
+        `;
+
+        ordersTableBody.appendChild(tr);
+      });
+
+      renderPagination(totalPages);
+    }
+
+    // Pagination buttons
+    function renderPagination(totalPages) {
+      paginationDiv.innerHTML = '';
+      if (totalPages <= 1) return;
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.disabled = i === currentPage;
+        btn.style.margin = '0 5px';
+        btn.addEventListener('click', () => {
+          currentPage = i;
+          displayOrders();
+        });
+        paginationDiv.appendChild(btn);
+      }
+    }
+
+    // Edit order - populate form for editing
+    window.editOrder = async function(id) {
+      const doc = await db.collection('orders').doc(id).get();
+      if (!doc.exists) {
+        alert('Order not found');
+        return;
+      }
+      const order = doc.data();
+      docIdInput.value = doc.id;
+      teamNameInput.value = order.teamName || '';
+      for (const input of statusInputs) {
+        input.checked = (input.value === order.status);
+      }
+      if (order.dueDate) {
+        const date = order.dueDate.toDate();
+        dueDateInput.value = date.toISOString().slice(0,10);
+      } else {
+        setDefaultDueDate();
+      }
+      previewImg.src = order.imageUrl || '';
+      imageUploadInput.value = ''; // reset file input
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    };
+
+    // Delete order
+    window.deleteOrder = async function(id) {
+      if (!confirm('Are you sure you want to delete this order?')) return;
+      try {
+        await db.collection('orders').doc(id).delete();
+        alert('Order deleted');
+        loadOrders();
+      } catch (error) {
+        console.error('Delete failed', error);
+        alert('Failed to delete order');
+      }
+    };
+
+    // Escape HTML helper
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.replace(/[&<>"']/g, (match) => {
+        const escape = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        };
+        return escape[match];
+      });
+    }
+
+    // Handle form submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        let imageUrl = previewImg.src || '';
+
+        // If user selected a new image, upload to Cloudinary
+        if (imageUploadInput.files.length > 0) {
+          const file = imageUploadInput.files[0];
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('upload_preset', cloudinaryUploadPreset);
+
+          const response = await fetch(cloudinaryUrl, {
+            method: 'POST',
+            body: formData
+          });
+          if (!response.ok) throw new Error('Image upload failed');
+          const data = await response.json();
+          imageUrl = data.secure_url;
+        }
+
+        const status = Array.from(statusInputs).find(i => i.checked)?.value || 'Received';
+
+        const dueDateValue = dueDateInput.value;
+        const dueDateTimestamp = dueDateValue ? new Date(dueDateValue) : new Date();
+        // Firestore Timestamp format
+        const dueDateFirestore = firebase.firestore.Timestamp.fromDate(dueDateTimestamp);
+
+        const orderData = {
+          teamName: teamNameInput.value.trim(),
+          status,
+          dueDate: dueDateFirestore,
+          imageUrl
+        };
+
+        const existingId = docIdInput.value;
+        if (existingId) {
+          // Update existing
+          await db.collection('orders').doc(existingId).set(orderData);
+          alert('Order updated');
+        } else {
+          // New document
+          await db.collection('orders').add(orderData);
+          alert('Order added');
+        }
+
+        form.reset();
+    setDefaultDueDate();
+    previewImg.src = '';
+    docIdInput.value = '';
+
+    // Reload orders list
+    loadOrders();
+
+  } catch (error) {
+    console.error('Error saving order:', error);
+    alert('Failed to save order. See console.');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+  }
+});
+
+// Search input event
+searchTeamInput.addEventListener('input', () => {
+  currentPage = 1;
+  displayOrders();
+});
+
+// Initial load
+loadOrders();
+
+    </script> 
+</body> 
 </html>
