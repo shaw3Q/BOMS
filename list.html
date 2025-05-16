@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orders + Image Carousels</title>
+  <style>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  min-height: 100vh;
+  /* Remove flexbox centering */
+  display: block;
+}
+
+
+.container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  width: 100vw;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.list-container {
+  flex: 0 0 30%; /* fixed 30% width */
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  overflow-x: auto;
+  min-width: 250px; /* optional minimum */
+}
+
+    .list-container {
+      overflow-x: auto;
+    }
+
+.image-column {
+  flex: 1 1 70%; /* fill remaining 70% */
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 300px; /* optional minimum */
+}
+
+    .carousel-box h3 {
+      text-align: center;
+      margin: 0 0 10px;
+      font-size: 1.2em;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+	    margin-bottom: 20px; /* adds space below each box */
+    }
+
+    .carousel-track-wrapper {
+      overflow: hidden;
+      width: 100%;
+    }
+
+.carousel-track {
+  display: flex;
+  gap: 20px;
+  animation: scrollCarousel 27s linear infinite; /* was 30s */
+}
+
+    .carousel-track img {
+      height: 300px;
+      width: 300px;
+      flex-shrink: 0;
+      object-fit: cover;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .carousel-track img:hover {
+      transform: scale(1.05);
+    }
+
+    @keyframes scrollCarousel {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      table-layout: auto;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    td.status[data-status="Received"] { background-color: #007bff; color: white; }
+    td.status[data-status="On going"] { background-color: #ffc107; color: black; }
+    td.status[data-status="Finished"] { background-color: #28a745; color: white; }
+    td.status[data-status="Released"] { background-color: #6c757d; color: white; }
+
+    td.image img {
+      max-width: 80px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- LEFT: Orders List -->
+  <div class="list-container">
+    <h2>Orders</h2>
+    <input type="text" id="searchTeam" placeholder="Search team name..." />
+    <button id="loadMoreBtn">Load More</button>
+    <table id="ordersTable" aria-label="Orders list">
+      <thead>
+        <tr>
+          <th>Team</th>
+          <th>Tailor</th>
+          <th>Artist</th>
+          <th>Status</th>
+          <th>Due Date</th>
+          <th>Image</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- RIGHT: Image Carousels -->
+  <div class="image-column">
+    <div class="carousel-box">
+      <h3>Finished</h3>
+      <div class="carousel-track-wrapper">
+        <div id="finishedCarousel" class="carousel-track"></div>
+      </div>
+    </div>
+    <div class="carousel-box">
+      <h3>On Going</h3>
+      <div class="carousel-track-wrapper">
+        <div id="onGoingCarousel" class="carousel-track"></div>
+      </div>
+    </div>
+	
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCWCUiCICoraIkT6QawtM18WenCzm4tBPI",
+    authDomain: "boms-c7893.firebaseapp.com",
+    projectId: "boms-c7893",
+    storageBucket: "boms-c7893.firebasestorage.app",
+    messagingSenderId: "388757655613",
+    appId: "1:388757655613:web:aedd6ba996520d8739da54"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const searchTeamInput = document.getElementById('searchTeam');
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  const ordersTableBody = document.querySelector('#ordersTable tbody');
+
+  let orders = [];
+  let filteredOrders = [];
+  let displayLimit = 15;
+
+  function renderOrders() {
+    ordersTableBody.innerHTML = '';
+    let count = 0;
+    for (const order of filteredOrders) {
+      if (count++ >= displayLimit) break;
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${order.teamName}</td>
+        <td>${order.tailor || ''}</td>
+        <td>${order.artist || ''}</td>
+        <td class="status" data-status="${order.status}">${order.status}</td>
+        <td>${order.dueDate ? new Date(order.dueDate).toLocaleDateString() : ''}</td>
+        <td class="image">${order.imageUrl ? `<img src="${order.imageUrl}" alt="Order Image" onclick="window.open('${order.imageUrl}', '_blank')">` : '-'}</td>
+      `;
+
+      ordersTableBody.appendChild(tr);
+    }
+    loadMoreBtn.style.display = filteredOrders.length > displayLimit ? 'inline-block' : 'none';
+  }
+
+  function renderCarousels() {
+    const finishedEl = document.getElementById('finishedCarousel');
+    const ongoingEl = document.getElementById('onGoingCarousel');
+    finishedEl.innerHTML = '';
+    ongoingEl.innerHTML = '';
+
+    const finished = filteredOrders.filter(o => o.status === 'Finished' && o.imageUrl).slice(0, 10);
+    const ongoing = filteredOrders.filter(o => o.status === 'On going' && o.imageUrl).slice(0, 10);
+
+    [...finished, ...finished].forEach(order => {
+      const img = document.createElement('img');
+      img.src = order.imageUrl;
+      img.alt = `Finished - ${order.teamName}`;
+      img.title = order.teamName;
+      img.addEventListener('click', () => window.open(order.imageUrl, '_blank'));
+      finishedEl.appendChild(img);
+    });
+
+    [...ongoing, ...ongoing].forEach(order => {
+      const img = document.createElement('img');
+      img.src = order.imageUrl;
+      img.alt = `Ongoing - ${order.teamName}`;
+      img.title = order.teamName;
+      img.addEventListener('click', () => window.open(order.imageUrl, '_blank'));
+      ongoingEl.appendChild(img);
+    });
+  }
+
+  const originalRenderOrders = renderOrders;
+  renderOrders = function () {
+    originalRenderOrders();
+    renderCarousels();
+  }
+
+  async function fetchOrders() {
+    try {
+      const snapshot = await db.collection('orders').get();
+      orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const statusPriority = {
+        "Received": 1,
+        "On going": 2,
+        "Finished": 3,
+        "Released": 4
+      };
+
+      orders.sort((a, b) => {
+        const dateA = new Date(a.dueDate || 0);
+        const dateB = new Date(b.dueDate || 0);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateB - dateA;
+        }
+        return (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99);
+      });
+
+      filteredOrders = [...orders];
+      renderOrders();
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    }
+  }
+
+  function filterOrders() {
+    const searchTerm = searchTeamInput.value.trim().toLowerCase();
+    filteredOrders = orders.filter(o => o.teamName.toLowerCase().includes(searchTerm));
+    displayLimit = 15;
+    renderOrders();
+  }
+
+  searchTeamInput.addEventListener('input', filterOrders);
+  loadMoreBtn.addEventListener('click', () => {
+    displayLimit += 15;
+    renderOrders();
+  });
+
+  fetchOrders();
+  setInterval(fetchOrders, 300000); // auto-refresh every 5 minutes
+</script>
+</body>
+</html>
