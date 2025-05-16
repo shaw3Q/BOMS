@@ -430,16 +430,19 @@ imageUpload.value = '';
 
 // Add tailor and artist to sets and update datalist
 function updateTailorArtistLists(order) {
-if (order.tailor) {
-tailorSet.add(order.tailor);
+  if (order.tailor) {
+    tailorSet.add(order.tailor);
+  }
+  if (order.artist) {
+    artistSet.add(order.artist);
+  }
+  tailorList.innerHTML = Array.from(tailorSet)
+    .map(t => `<option value="${t}">${t}</option>`)
+    .join('');
+  artistList.innerHTML = Array.from(artistSet)
+    .map(a => `<option value="${a}">${a}</option>`)
+    .join('');
 }
-if (order.artist) {
-artistSet.add(order.artist);
-}
-tailorList.innerHTML = Array.from(tailorSet).map(t => <option value="${t}">).join('');
-artistList.innerHTML = Array.from(artistSet).map(a => <option value="${a}">).join('');
-}
-
 // Fetch all orders, sort by due date ascending
 async function fetchOrders() {
 const snapshot = await db.collection('orders').orderBy('dueDate').get();
