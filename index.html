@@ -307,22 +307,22 @@ const ctx = canvas.getContext('2d');
 
 // Upload image to Cloudinary
 async function uploadImage(file) {
-try {
-const compressedBlob = await compressImage(file);
-const formData = new FormData();
-formData.append('file', compressedBlob);
-formData.append('upload_preset', UPLOAD_PRESET);
-const res = await fetch(https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload, {
-method: 'POST',
-body: formData
-});
-const data = await res.json();
-if (data.secure_url) return data.secure_url;
-throw new Error('Upload failed');
-} catch (err) {
-alert('Image upload error: ' + err.message);
-return null;
-}
+  try {
+    const compressedBlob = await compressImage(file);
+    const formData = new FormData();
+    formData.append('file', compressedBlob);
+    formData.append('upload_preset', UPLOAD_PRESET);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.secure_url) return data.secure_url;
+    throw new Error('Upload failed');
+  } catch (err) {
+    alert('Image upload error: ' + err.message);
+    return null;
+  }
 }
 
 // Render orders to table
