@@ -9,10 +9,12 @@
       font-family: Arial, sans-serif;
       margin: 20px;
       background-color: #f4f4f4;
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
     }
     .container {
-      max-width: 600px;
-      margin: auto;
+      flex: 1;
       background: white;
       padding: 20px;
       border-radius: 8px;
@@ -55,11 +57,24 @@
     button:hover {
       background-color: #0056b3;
     }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
   </style>
 </head>
 <body>
-  <h2>Order Form</h2>
   <div class="container">
+    <h2>Order Form</h2>
     <div class="form-card">
       <form id="orderForm">
         <input type="hidden" id="docId" />
@@ -97,6 +112,24 @@
     </div>
   </div>
 
+  <div class="container">
+    <h2>Orders</h2>
+    <input type="text" id="searchTeam" placeholder="Search team name..." />
+    <table id="ordersTable">
+      <thead>
+        <tr>
+          <th>Team</th>
+          <th>Tailor</th>
+          <th>Status</th>
+          <th>Due Date</th>
+          <th>Image</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
@@ -116,8 +149,13 @@
     const orderForm = document.getElementById('orderForm');
     const preview = document.getElementById('preview');
     const imageUpload = document.getElementById('imageUpload');
+    const searchTeam = document.getElementById('searchTeam');
+    const tableBody = document.querySelector('#ordersTable tbody');
 
     let imageFile = null;
+    let allOrders = [];
+    let currentPage = 1;
+    const perPage = 15;
 
     imageUpload.addEventListener('change', (e) => {
       imageFile = e.target.files[0];
@@ -129,7 +167,7 @@
     async function uploadToCloudinary(file) {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', 'upload_preset_boms'); // replace with your actual preset
+      formData.append('upload_preset', 'upload_preset_boms');
 
       const response = await fetch('https://api.cloudinary.com/v1_1/dmyne19qj/image/upload', {
         method: 'POST',
@@ -141,9 +179,46 @@
       return data.secure_url;
     }
 
+    async function loadOrders() {
+      const snapshot = await db.collection('orders').get();
+      allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderTable();
+    }
+
+    function renderTable() {
+      const query = searchTeam.value.toLowerCase();
+      const filtered = allOrders.filter(order => order.teamName.toLowerCase().includes(query));
+      const start = (currentPage - 1) * perPage;
+      const paginated = filtered.slice(start, start + perPage);
+
+      tableBody.innerHTML = '';
+      paginated.forEach(order => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td contenteditable onBlur="updateField('${order.id}', 'teamName', this.textContent)">${order.teamName}</td>
+          <td contenteditable onBlur="updateField('${order.id}', 'tailor', this.textContent)">${order.tailor}</td>
+          <td contenteditable onBlur="updateField('${order.id}', 'status', this.textContent)">${order.status}</td>
+          <td contenteditable onBlur="updateField('${order.id}', 'dueDate', this.textContent)">${order.dueDate}</td>
+          <td><img src="${order.imageUrl}" width="50" /></td>
+          <td><button onclick="deleteOrder('${order.id}')">Delete</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    async function updateField(id, field, value) {
+      await db.collection('orders').doc(id).update({ [field]: value });
+    }
+
+    async function deleteOrder(id) {
+      if (confirm('Delete this order?')) {
+        await db.collection('orders').doc(id).delete();
+        loadOrders();
+      }
+    }
+
     orderForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
       try {
         const docId = document.getElementById('docId').value;
         const teamName = document.getElementById('teamName').value;
@@ -154,7 +229,6 @@
         let imageUrl = preview.src;
         if (imageFile) {
           imageUrl = await uploadToCloudinary(imageFile);
-          console.log("Uploaded to Cloudinary:", imageUrl);
         }
 
         const data = { teamName, tailor, status, dueDate, imageUrl };
@@ -162,20 +236,27 @@
         if (docId) {
           await db.collection('orders').doc(docId).update(data);
         } else {
-          const ref = await db.collection('orders').add(data);
-          console.log("Document created with ID:", ref.id);
+          await db.collection('orders').add(data);
         }
 
         orderForm.reset();
         preview.src = '';
         imageFile = null;
         document.getElementById('docId').value = '';
+        loadOrders();
         alert('Order saved successfully.');
       } catch (error) {
         console.error('❌ Error saving data:', error);
         alert('An error occurred while saving. Check console for details.');
       }
     });
+
+    searchTeam.addEventListener('input', () => {
+      currentPage = 1;
+      renderTable();
+    });
+
+    loadOrders();
   </script>
 </body>
 </html>
