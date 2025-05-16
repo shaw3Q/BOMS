@@ -1,470 +1,566 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Order Form with Tailor & Artist</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f4f4f4;
-      display: flex;
-      flex-direction: row;
-      gap: 20px;
-    }
-    .form-container {
-      flex: 0 0 20%;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .list-container {
-      flex: 0 0 80%;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .form-card label {
-      display: block;
-      margin-top: 10px;
-    }
-    .form-card input[type="text"],
-    .form-card input[type="date"],
-    .form-card input[type="file"] {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    .status-options {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 5px;
-    }
-    .status-options input[type="radio"] {
-      display: none;
-    }
-    .status-options label {
-      padding: 10px;
-      text-align: center;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      cursor: pointer;
-      background-color: #f0f0f0;
-      user-select: none;
-      color: black;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .status-options input#received:checked + label {
-      background-color: #007bff;
-      color: white;
-      border-color: #007bff;
-    }
-    .status-options input#ongoing:checked + label {
-      background-color: #fd7e14;
-      color: white;
-      border-color: #fd7e14;
-    }
-    .status-options input#finished:checked + label {
-      background-color: #28a745;
-      color: white;
-      border-color: #28a745;
-    }
-    .status-options input#released:checked + label {
-      background-color: #6f42c1;
-      color: white;
-      border-color: #6f42c1;
-    }
-    .preview-img {
-      margin-top: 10px;
-      max-width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 4px;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 15px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      width: 100%;
-      font-weight: bold;
-      font-size: 1rem;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 0.9rem;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-      vertical-align: middle;
-    }
-    th {
-      background-color: #f0f0f0;
-    }
-    /* Status cell colors */
-    .status-cell.received {
-      background-color: #007bff;
-      color: white;
-      border-radius: 4px;
-      padding: 4px 8px;
-      text-align: center;
-    }
-    .status-cell.ongoing {
-      background-color: #fd7e14;
-      color: white;
-      border-radius: 4px;
-      padding: 4px 8px;
-      text-align: center;
-    }
-    .status-cell.finished {
-      background-color: #28a745;
-      color: white;
-      border-radius: 4px;
-      padding: 4px 8px;
-      text-align: center;
-    }
-    .status-cell.released {
-      background-color: #6f42c1;
-      color: white;
-      border-radius: 4px;
-      padding: 4px 8px;
-      text-align: center;
-    }
-    /* Larger images in table */
-    .orders-img {
-      max-width: 80px;
-      max-height: 50px;
-      cursor: pointer;
-      border-radius: 4px;
-      object-fit: cover;
-    }
-    /* Search input */
-    #searchTeam {
-      width: 30%;
-      padding: 6px 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      margin-bottom: 10px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Order Form with Cloudinary & Firebase</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+    display: flex;
+    gap: 20px;
+  }
+  .form-container {
+    flex: 0 0 20%;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  .list-container {
+    flex: 0 0 80%;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    overflow-x: auto;
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+  }
+  input[type="text"],
+  input[type="date"],
+  input[type="file"],
+  input[list] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  .status-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 5px;
+  }
+  .status-options input[type="radio"] {
+    display: none;
+  }
+  .status-options label {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    background-color: #f0f0f0;
+    transition: background-color 0.3s,color 0.3s;
+  }
+  .status-options input[type="radio"]:checked + label {
+    color: white;
+  }
+  /* Status colors for form */
+  #received:checked + label { background-color: #007bff; }
+  #ongoing:checked + label { background-color: #ffc107; color: black; }
+  #finished:checked + label { background-color: #28a745; }
+  #released:checked + label { background-color: #6c757d; }
+
+  .preview-img {
+    margin-top: 10px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  button {
+    margin-top: 20px;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    table-layout: auto;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  th.status, td.status {
+    width: 120px;
+  }
+  th.image, td.image {
+    width: 100px;
+  }
+  th.actions, td.actions {
+    width: 80px;
+  }
+  /* Status colors for table cells */
+  td.status[data-status="Received"] { background-color: #007bff; color: white; }
+  td.status[data-status="On going"] { background-color: #ffc107; color: black; }
+  td.status[data-status="Finished"] { background-color: #28a745; color: white; }
+  td.status[data-status="Released"] { background-color: #6c757d; color: white; }
+  /* Image styles */
+  td.image img {
+    max-width: 80px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  /* Action buttons style */
+  .action-btn {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    margin: 0 2px;
+  }
+  .action-btn:hover {
+    text-decoration: underline;
+  }
+  #loadMoreBtn, #exportBtn {
+    margin-right: 10px;
+  }
+  #actionsContainer {
+    margin-top: 10px;
+  }
+</style>
 </head>
 <body>
-  <div class="form-container">
-    <h2>Order Form</h2>
-    <div class="form-card">
-      <form id="orderForm">
-        <input type="hidden" id="docId" />
 
-        <label>Team Name</label>
-        <input type="text" id="teamName" required />
+<div class="form-container">
+  <h2>Order Form</h2>
+  <form id="orderForm">
+    <input type="hidden" id="docId" />
 
-        <label>Tailor</label>
-        <input type="text" id="tailor" placeholder="Optional" />
+    <label>Team Name</label>
+    <input type="text" id="teamName" required />
 
-        <label>Artist</label>
-        <input type="text" id="artist" placeholder="Optional" />
+    <label>Tailor</label>
+    <input list="tailorList" id="tailor" placeholder="Select or type tailor" />
+    <datalist id="tailorList"></datalist>
 
-        <label>Status</label>
-        <div class="status-options">
-          <input type="radio" id="received" name="status" value="Received" checked />
-          <label for="received">Received</label>
+    <label>Artist</label>
+    <input list="artistList" id="artist" placeholder="Select or type artist" />
+    <datalist id="artistList"></datalist>
 
-          <input type="radio" id="ongoing" name="status" value="On going" />
-          <label for="ongoing">On going</label>
+    <label>Status</label>
+    <div class="status-options">
+      <input type="radio" id="received" name="status" value="Received" checked>
+      <label for="received">Received</label>
 
-          <input type="radio" id="finished" name="status" value="Finished" />
-          <label for="finished">Finished</label>
+      <input type="radio" id="ongoing" name="status" value="On going">
+      <label for="ongoing">On going</label>
 
-          <input type="radio" id="released" name="status" value="Released" />
-          <label for="released">Released</label>
-        </div>
+      <input type="radio" id="finished" name="status" value="Finished">
+      <label for="finished">Finished</label>
 
-        <label>Due Date</label>
-        <input type="date" id="dueDate" />
-
-        <label>Upload Image</label>
-        <input type="file" id="imageUpload" accept="image/*" />
-        <img id="preview" class="preview-img" />
-
-        <button type="submit">Save</button>
-      </form>
+      <input type="radio" id="released" name="status" value="Released">
+      <label for="released">Released</label>
     </div>
+
+    <label>Due Date</label>
+    <input type="date" id="dueDate" />
+
+    <label>Upload Image</label>
+    <input type="file" id="imageUpload" accept="image/*" />
+    <img id="preview" class="preview-img" />
+
+    <button type="submit">Save</button>
+  </form>
+</div>
+
+<div class="list-container">
+  <h2>Orders</h2>
+  <input type="text" id="searchTeam" placeholder="Search team name..." />
+
+  <div id="actionsContainer">
+    <button id="loadMoreBtn">Load More</button>
+    <button id="exportBtn">Export to Excel</button>
   </div>
 
-  <div class="list-container">
-    <h2>Orders</h2>
-    <input type="text" id="searchTeam" placeholder="Search team name..." />
-    <table id="ordersTable">
-      <thead>
-        <tr>
-          <th>Team</th>
-          <th>Tailor</th>
-          <th>Artist</th>
-          <th>Status</th>
-          <th>Due Date</th>
-          <th>Image</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <table id="ordersTable" aria-label="Orders list">
+    <thead>
+      <tr>
+        <th>Team</th>
+        <th>Tailor</th>
+        <th>Artist</th>
+        <th class="status">Status</th>
+        <th>Due Date</th>
+        <th class="image">Image</th>
+        <th class="actions">Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCWCUiCICoraIkT6QawtM18WenCzm4tBPI",
+    authDomain: "boms-c7893.firebaseapp.com",
+    projectId: "boms-c7893",
+    storageBucket: "boms-c7893.firebasestorage.app",
+    messagingSenderId: "388757655613",
+    appId: "1:388757655613:web:aedd6ba996520d8739da54"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCWCUiCICoraIkT6QawtM18WenCzm4tBPI",
-      authDomain: "boms-c7893.firebaseapp.com",
-      projectId: "boms-c7893",
-      storageBucket: "boms-c7893.firebasestorage.app",
-      messagingSenderId: "388757655613",
-      appId: "1:388757655613:web:aedd6ba996520d8739da54"
-    };
+  // Cloudinary config
+  const CLOUD_NAME = 'dmyne19qj';
+  const UPLOAD_PRESET = 'upload_preset_boms';
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  // Elements
+  const form = document.getElementById('orderForm');
+  const teamNameInput = document.getElementById('teamName');
+  const tailorInput = document.getElementById('tailor');
+  const artistInput = document.getElementById('artist');
+  const tailorList = document.getElementById('tailorList');
+  const artistList = document.getElementById('artistList');
+  const statusRadios = document.querySelectorAll('input[name="status"]');
+  const dueDateInput = document.getElementById('dueDate');
+  const imageUpload = document.getElementById('imageUpload');
+  const previewImg = document.getElementById('preview');
+  const docIdInput = document.getElementById('docId');
+  const ordersTableBody = document.querySelector('#ordersTable tbody');
+  const searchTeamInput = document.getElementById('searchTeam');
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  const exportBtn = document.getElementById('exportBtn');
 
-    const cloudName = "dmyne19qj";
-    const uploadPreset = "upload_preset_boms";
+  // State
+  let orders = [];
+  let filteredOrders = [];
+  let displayLimit = 15;
+  let tailorSet = new Set();
+  let artistSet = new Set();
 
-    const orderForm = document.getElementById("orderForm");
-    const ordersTableBody = document.querySelector("#ordersTable tbody");
-    const preview = document.getElementById("preview");
-    const imageUpload = document.getElementById("imageUpload");
-    const dueDateInput = document.getElementById("dueDate");
-    const searchTeam = document.getElementById("searchTeam");
+  // Set default due date = 5 days later
+  const today = new Date();
+  today.setDate(today.getDate() + 5);
+  dueDateInput.valueAsDate = today;
 
-    // Set due date default 5 days later
-    const today = new Date();
-    today.setDate(today.getDate() + 5);
-    dueDateInput.valueAsDate = today;
-
-    // Show image preview
-    imageUpload.addEventListener("change", () => {
-      const file = imageUpload.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = e => preview.src = e.target.result;
-        reader.readAsDataURL(file);
-      } else {
-        preview.src = "";
+  // Image compression helper
+  function compressImage(file, maxSizeKB = 500, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject('File is not an image');
+        return;
       }
-    });
-
-    // Submit form
-    orderForm.addEventListener("submit", async e => {
-      e.preventDefault();
-      const docId = document.getElementById("docId").value;
-      const teamName = document.getElementById("teamName").value.trim();
-      const tailor = document.getElementById("tailor").value.trim();
-      const artist = document.getElementById("artist").value.trim();
-      const status = document.querySelector('input[name="status"]:checked').value;
-      const dueDate = dueDateInput.value;
-      let imageUrl = preview.src || "";
-
-      // Upload image to Cloudinary if new image selected and not already a URL
-      if (imageUpload.files.length > 0 && !imageUrl.startsWith("http")) {
-        imageUrl = await uploadImageToCloudinary(imageUpload.files[0]);
-      }
-
-      const data = {
-        teamName,
-        tailor,
-        artist,
-        status,
-        dueDate,
-        imageUrl
-      };
-
-      try {
-        if (docId) {
-          await db.collection("orders").doc(docId).update(data);
-        } else {
-          await db.collection("orders").add(data);
-        }
-        resetForm();
-        loadOrders();
-      } catch (error) {
-        alert("Error saving data: " + error.message);
-      }
-    });
-
-    async function uploadImageToCloudinary(file) {
-      const resizedFile = await resizeImage(file, 1024, 1024, 0.75);
-
-      const formData = new FormData();
-      formData.append("file", resizedFile);
-      formData.append("upload_preset", uploadPreset);
-
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      return data.secure_url;
-    }
-
-    function resizeImage(file, maxWidth, maxHeight, quality = 0.8) {
-      return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = function(event) {
         const img = new Image();
-        const reader = new FileReader();
-        reader.onload = e => {
-          img.src = e.target.result;
-        };
-        img.onload = () => {
-          let { width, height } = img;
+        img.onload = function()
+{
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+  // Resize image if too large (max 1024px width or height)
+      const maxDim = 1024;
+      let width = img.width;
+      let height = img.height;
+      if (width > height && width > maxDim) {
+        height *= maxDim / width;
+        width = maxDim;
+      } else if (height > width && height > maxDim) {
+        width *= maxDim / height;
+        height = maxDim;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
 
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
+      // Compress and check size, reduce quality if needed
+      function attemptCompress(q) {
+        canvas.toBlob(blob => {
+          if (blob.size / 1024 <= maxSizeKB || q < 0.1) {
+            resolve(blob);
+          } else {
+            attemptCompress(q - 0.1);
           }
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-
-          const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-
-          canvas.toBlob(
-            (blob) => {
-              resolve(new File([blob], file.name, { type: file.type }));
-            },
-            file.type,
-            quality
-          );
-        };
-        reader.readAsDataURL(file);
-      });
+        }, file.type, q);
+      }
+      attemptCompress(quality);
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+});
     }
 
-    async function loadOrders() {
-      const searchValue = searchTeam.value.trim().toLowerCase();
-      const snapshot = await db.collection("orders").orderBy("dueDate").get();
-
-      let orders = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        data.id = doc.id;
-        if (!searchValue || (data.teamName && data.teamName.toLowerCase().includes(searchValue))) {
-          orders.push(data);
-        }
-      });
-
-      renderOrders(orders);
-    }
-
-    function renderOrders(orders) {
-      ordersTableBody.innerHTML = "";
-      orders.forEach(order => {
-        const tr = document.createElement("tr");
-
-        const teamTd = document.createElement("td");
-        teamTd.textContent = order.teamName || "";
-        tr.appendChild(teamTd);
-
-        const tailorTd = document.createElement("td");
-        tailorTd.textContent = order.tailor || "";
-        tr.appendChild(tailorTd);
-
-        const artistTd = document.createElement("td");
-        artistTd.textContent = order.artist || "";
-        tr.appendChild(artistTd);
-
-        const statusTd = document.createElement("td");
-        statusTd.textContent = order.status;
-        statusTd.classList.add("status-cell", order.status.toLowerCase().replace(/\s/g, ""));
-        tr.appendChild(statusTd);
-
-                         const dueTd = document.createElement("td");
-    dueTd.textContent = order.dueDate || "";
-    tr.appendChild(dueTd);
-
-    const imgTd = document.createElement("td");
-    if (order.imageUrl) {
-      const img = document.createElement("img");
-      img.src = order.imageUrl;
-      img.alt = "Order Image";
-      img.className = "orders-img";
-      img.style.cursor = "pointer";
-      img.onclick = () => window.open(order.imageUrl, "_blank");
-      imgTd.appendChild(img);
-    }
-    tr.appendChild(imgTd);
-
-    const actionsTd = document.createElement("td");
-
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "Edit";
-    editBtn.style.marginRight = "8px";
-    editBtn.onclick = () => editOrder(order);
-    actionsTd.appendChild(editBtn);
-
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "Delete";
-    delBtn.onclick = () => deleteOrder(order.id);
-    actionsTd.appendChild(delBtn);
-
-    tr.appendChild(actionsTd);
-
-    ordersTableBody.appendChild(tr);
-  });
+// Upload image to Cloudinary
+async function uploadImage(file) {
+try {
+const compressedBlob = await compressImage(file);
+const formData = new FormData();
+formData.append('file', compressedBlob);
+formData.append('upload_preset', UPLOAD_PRESET);
+const res = await fetch(https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload, {
+method: 'POST',
+body: formData
+});
+const data = await res.json();
+if (data.secure_url) return data.secure_url;
+throw new Error('Upload failed');
+} catch (err) {
+alert('Image upload error: ' + err.message);
+return null;
+}
 }
 
-function editOrder(order) {
-  document.getElementById("docId").value = order.id || "";
-  document.getElementById("teamName").value = order.teamName || "";
-  document.getElementById("tailor").value = order.tailor || "";
-  document.getElementById("artist").value = order.artist || "";
-  document.querySelectorAll('input[name="status"]').forEach(radio => {
-    radio.checked = radio.value === order.status;
-  });
-  dueDateInput.value = order.dueDate || "";
-  preview.src = order.imageUrl || "";
-  imageUpload.value = "";
-}
+// Render orders to table
+function renderOrders() {
+ordersTableBody.innerHTML = '';
+let count = 0;
+for (const order of filteredOrders) {
+if (count++ >= displayLimit) break;
+const tr = document.createElement('tr');
+    // Team
+  const tdTeam = document.createElement('td');
+  tdTeam.textContent = order.teamName;
+  tr.appendChild(tdTeam);
 
-async function deleteOrder(id) {
-  if (confirm("Are you sure you want to delete this order?")) {
-    await db.collection("orders").doc(id).delete();
-    loadOrders();
+  // Tailor
+  const tdTailor = document.createElement('td');
+  tdTailor.textContent = order.tailor || '';
+  tr.appendChild(tdTailor);
+
+  // Artist
+  const tdArtist = document.createElement('td');
+  tdArtist.textContent = order.artist || '';
+  tr.appendChild(tdArtist);
+
+  // Status with color
+  const tdStatus = document.createElement('td');
+  tdStatus.classList.add('status');
+  tdStatus.setAttribute('data-status', order.status);
+  tdStatus.textContent = order.status;
+  tr.appendChild(tdStatus);
+
+  // Due Date
+  const tdDue = document.createElement('td');
+  tdDue.textContent = order.dueDate ? new Date(order.dueDate).toLocaleDateString() : '';
+  tr.appendChild(tdDue);
+
+  // Image clickable
+  const tdImage = document.createElement('td');
+  tdImage.classList.add('image');
+  if (order.imageUrl) {
+    const img = document.createElement('img');
+    img.src = order.imageUrl;
+    img.alt = "Order Image";
+    img.title = "Click to enlarge";
+    img.addEventListener('click', () => {
+      window.open(order.imageUrl, '_blank');
+    });
+    tdImage.appendChild(img);
+  } else {
+    tdImage.textContent = '-';
   }
+  tr.appendChild(tdImage);
+
+  // Actions: Edit and Delete buttons
+  const tdActions = document.createElement('td');
+  tdActions.classList.add('actions');
+
+  const editBtn = document.createElement('button');
+  editBtn.textContent = '✏️';
+  editBtn.title = 'Edit';
+  editBtn.className = 'action-btn';
+  editBtn.addEventListener('click', () => loadOrderToForm(order));
+  tdActions.appendChild(editBtn);
+
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '🗑️';
+  delBtn.title = 'Delete';
+  delBtn.className = 'action-btn';
+  delBtn.addEventListener('click', () => deleteOrder(order.id));
+  tdActions.appendChild(delBtn);
+
+  tr.appendChild(tdActions);
+
+  ordersTableBody.appendChild(tr);
+}
+loadMoreBtn.style.display = filteredOrders.length > displayLimit ? 'inline-block' : 'none';
 }
 
-function resetForm() {
-  orderForm.reset();
-  document.getElementById("docId").value = "";
-  preview.src = "";
-  const newDate = new Date();
-  newDate.setDate(newDate.getDate() + 5);
-  dueDateInput.valueAsDate = newDate;
+// Load order data to form for editing
+function loadOrderToForm(order) {
+docIdInput.value = order.id;
+teamNameInput.value = order.teamName;
+tailorInput.value = order.tailor || '';
+artistInput.value = order.artist || '';
+statusRadios.forEach(r => r.checked = r.value === order.status);
+dueDateInput.value = order.dueDate ? order.dueDate.split('T')[0] : '';
+previewImg.src = order.imageUrl || '';
+previewImg.style.display = order.imageUrl ? 'block' : 'none';
 }
 
-loadOrders();
+// Clear form
+function clearForm() {
+docIdInput.value = '';
+teamNameInput.value = '';
+tailorInput.value = '';
+artistInput.value = '';
+statusRadios.forEach(r => r.checked = r.value === 'Received');
+const newDate = new Date();
+newDate.setDate(newDate.getDate() + 5);
+dueDateInput.valueAsDate = newDate;
+previewImg.src = '';
+previewImg.style.display = 'none';
+imageUpload.value = '';
+}
 
-searchTeam.addEventListener("input", loadOrders);
-</script> </body> </html>
+// Add tailor and artist to sets and update datalist
+function updateTailorArtistLists(order) {
+if (order.tailor) {
+tailorSet.add(order.tailor);
+}
+if (order.artist) {
+artistSet.add(order.artist);
+}
+tailorList.innerHTML = Array.from(tailorSet).map(t => <option value="${t}">).join('');
+artistList.innerHTML = Array.from(artistSet).map(a => <option value="${a}">).join('');
+}
+
+// Fetch all orders, sort by due date ascending
+async function fetchOrders() {
+const snapshot = await db.collection('orders').orderBy('dueDate').get();
+orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+tailorSet.clear();
+artistSet.clear();
+orders.forEach(updateTailorArtistLists);
+filteredOrders = [...orders];
+renderOrders();
+}
+
+// Filter by team name
+function filterOrders() {
+const searchTerm = searchTeamInput.value.trim().toLowerCase();
+filteredOrders = orders.filter(o => o.teamName.toLowerCase().includes(searchTerm));
+displayLimit = 15; // reset limit on new search
+renderOrders();
+}
+
+// Delete order by id
+async function deleteOrder(id) {
+if (!confirm('Are you sure you want to delete this order?')) return;
+await db.collection('orders').doc(id).delete();
+fetchOrders();
+clearForm();
+}
+
+// Export to Excel (CSV) - simple version
+function exportToExcel() {
+let csvContent = "data:text/csv;charset=utf-8,";
+csvContent += "Team,Tailor,Artist,Status,Due Date,Image URL\n";
+filteredOrders.slice(0, displayLimit).forEach(o => {
+const row = [
+"${o.teamName}",
+"${o.tailor || ''}",
+"${o.artist || ''}",
+"${o.status}",
+"${o.dueDate ? new Date(o.dueDate).toLocaleDateString() : ''}",
+"${o.imageUrl || ''}"
+].join(",");
+csvContent += row + "\n";
+});
+const encodedUri = encodeURI(csvContent);
+const link = document.createElement('a');
+link.href = encodedUri;
+link.download = 'orders_export.csv';
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+}
+
+// Handle image preview on upload with compression
+imageUpload.addEventListener('change', async () => {
+const file = imageUpload.files[0];
+if (!file) {
+previewImg.src = '';
+previewImg.style.display = 'none';
+return;
+}
+try {
+const compressedBlob = await compressImage(file);
+const url = URL.createObjectURL(compressedBlob);
+previewImg.src = url;
+previewImg.style.display = 'block';
+} catch (err) {
+alert('Error compressing image: ' + err);
+}
+});
+
+// Handle form submit
+form.addEventListener('submit', async (e) => {
+e.preventDefault();
+const id = docIdInput.value;
+const teamName = teamNameInput.value.trim();
+const tailor = tailorInput.value.trim() || null;
+const artist = artistInput.value.trim() || null;
+const status = Array.from(statusRadios).find(r => r.checked).value;
+const dueDateVal = dueDateInput.value;
+if (!teamName) {
+alert('Team name is required');
+return;
+}
+let imageUrl = previewImg.src && previewImg.style.display !== 'none' ? previewImg.src : null;
+// If preview is a local URL (blob), upload image to Cloudinary
+if (imageUpload.files.length > 0) {
+imageUrl = await uploadImage(imageUpload.files[0]);
+if (!imageUrl) return; // upload failed
+}
+const orderData = {
+teamName,
+tailor,
+artist,
+status,
+dueDate: dueDateVal ? new Date(dueDateVal).toISOString() : null,
+imageUrl
+};
+if (id) {
+await db.collection('orders').doc(id).update(orderData);
+alert('Order updated');
+} else {
+await db.collection('orders').add(orderData);
+alert('Order added');
+}
+clearForm();
+fetchOrders();
+});
+
+// Search input event
+searchTeamInput.addEventListener('input', filterOrders);
+
+// Load More button
+loadMoreBtn.addEventListener('click', () => {
+displayLimit += 15;
+renderOrders();
+});
+
+// Export button
+exportBtn.addEventListener('click', exportToExcel);
+
+// Initial load
+fetchOrders();
+</script>
+
+</body> </html>
