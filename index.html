@@ -1,552 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Order Form Without Firebase</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background: #f9f9f9;
-    color: #333;
-  }
-  .container {
-    display: flex;
-    gap: 30px;
-  }
-  form {
-    flex: 1;
-    background: white;
-    padding: 20px;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-  form > div {
-    margin-bottom: 15px;
-  }
-  label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: bold;
-  }
-  input[type="text"], input[type="date"], select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #aaa;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-  select:focus, input:focus {
-    border-color: #007BFF;
-    outline: none;
-  }
-  .radio-group {
-    display: flex;
-    gap: 10px;
-  }
-  .radio-group label {
-    font-weight: normal;
-    background: #eee;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    user-select: none;
-    border: 1px solid transparent;
-  }
-  .radio-group input[type="radio"] {
-    display: none;
-  }
-  .radio-group input[type="radio"]:checked + label {
-    background: #007BFF;
-    color: white;
-    border-color: #0056b3;
-  }
-  #imagePreview {
-    width: 100%;
-    max-height: 150px;
-    object-fit: contain;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  button {
-    padding: 10px 18px;
-    font-size: 16px;
-    border: none;
-    background: #007BFF;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  button:disabled {
-    background: #aaa;
-    cursor: not-allowed;
-  }
-  .data-container {
-    flex: 2;
-    background: white;
-    padding: 20px;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-  .search-container {
-    margin-bottom: 15px;
-  }
-  input#searchInput {
-    width: 100%;
-    padding: 8px;
-    font-size: 14px;
-    border-radius: 4px;
-    border: 1px solid #aaa;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  table thead tr {
-    background: #007BFF;
-    color: white;
-  }
-  table th, table td {
-    padding: 8px 10px;
-    border: 1px solid #ddd;
-    text-align: left;
-    vertical-align: middle;
-  }
-  table td input, table td select, table td input[type="date"] {
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid transparent;
-    padding: 5px;
-    border-radius: 3px;
-    font-size: 14px;
-  }
-  table td input:focus, table td select:focus, table td input[type="date"]:focus {
-    border-color: #007BFF;
-    outline: none;
-  }
-  .image-cell img {
-    max-height: 60px;
-    max-width: 60px;
-    object-fit: contain;
-    border-radius: 3px;
-  }
-  .action-buttons button {
-    margin-right: 5px;
-    padding: 5px 8px;
-    font-size: 14px;
-  }
-  .pagination {
-    margin-top: 15px;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-  }
-  .pagination button {
-    padding: 6px 10px;
-    border-radius: 4px;
-    border: 1px solid #007BFF;
-    background: white;
-    color: #007BFF;
-    cursor: pointer;
-  }
-  .pagination button.active, .pagination button:hover {
-    background: #007BFF;
-    color: white;
-  }
-  .export-button {
-    margin-top: 15px;
-    background: #28a745;
-  }
-</style>
-  
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Form with Firebase</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .form-card label {
+      display: block;
+      margin-top: 10px;
+    }
+    .form-card input[type="text"],
+    .form-card input[type="date"],
+    .form-card input[list],
+    .form-card input[type="file"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .status-options {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .preview-img {
+      margin-top: 10px;
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
+  <h2>Order Form</h2>
+  <div class="container">
+    <div class="form-card">
+      <form id="orderForm">
+        <input type="hidden" id="docId" />
+        <label>Team Name</label>
+        <input type="text" id="teamName" required />
 
-<h2>Order Entry Form</h2>
+        <label>Tailor</label>
+        <input list="tailorList" id="tailor" />
+        <datalist id="tailorList"></datalist>
 
-<div class="container">
-  <form id="orderForm">
-    <div>
-      <label for="teamName">Team Name</label>
-      <input type="text" id="teamName" required />
+        <label>Status</label>
+        <div class="status-options">
+          <input type="radio" id="received" name="status" value="Received" checked>
+          <label for="received">Received</label>
+
+          <input type="radio" id="ongoing" name="status" value="On going">
+          <label for="ongoing">On going</label>
+
+          <input type="radio" id="finished" name="status" value="Finished">
+          <label for="finished">Finished</label>
+
+          <input type="radio" id="delivered" name="status" value="Delivered">
+          <label for="delivered">Delivered</label>
+        </div>
+
+        <label>Due Date</label>
+        <input type="date" id="dueDate" />
+
+        <label>Upload Image</label>
+        <input type="file" id="imageUpload" accept="image/*" />
+        <img id="preview" class="preview-img" />
+
+        <button type="submit">Save</button>
+      </form>
     </div>
-
-    <div>
-      <label for="tailor">Tailor (editable dropdown)</label>
-      <input list="tailorsList" id="tailor" autocomplete="off" placeholder="Type or select tailor" />
-      <datalist id="tailorsList"></datalist>
-    </div>
-
-    <div>
-      <label>Status</label>
-      <div class="radio-group">
-        <input type="radio" id="statusReceived" name="status" value="Received" checked />
-        <label for="statusReceived">Received</label>
-
-        <input type="radio" id="statusOnGoing" name="status" value="On going" />
-        <label for="statusOnGoing">On going</label>
-
-        <input type="radio" id="statusFinished" name="status" value="Finished" />
-        <label for="statusFinished">Finished</label>
-      </div>
-    </div>
-
-    <div>
-      <label for="dueDate">Due Date</label>
-      <input type="date" id="dueDate" />
-    </div>
-
-    <div>
-      <label for="imageInput">Upload Image</label>
-      <input type="file" id="imageInput" accept="image/*" />
-      <img id="imagePreview" alt="Image preview" />
-    </div>
-
-    <div>
-      <button type="submit">Save</button>
-    </div>
-  </form>
-
-  <div class="data-container">
-    <div class="search-container">
-      <input type="text" id="searchInput" placeholder="Search by team name..." />
-    </div>
-
-    <table id="ordersTable" aria-label="Orders Table">
-      <thead>
-        <tr>
-          <th>Team Name</th>
-          <th>Tailor</th>
-          <th>Status</th>
-          <th>Due Date</th>
-          <th>Image</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Data rows here -->
-      </tbody>
-    </table>
-
-    <div class="pagination" id="pagination"></div>
-
-    <button class="export-button" id="exportBtn">Export to Excel</button>
   </div>
-</div>
 
-<script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-storage-compat.js"></script>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCWCUiCICoraIkT6QawtM18WenCzm4tBPI",
-    authDomain: "boms-c7893.firebaseapp.com",
-    projectId: "boms-c7893",
-    storageBucket: "boms-c7893.appspot.com",
-    messagingSenderId: "388757655613",
-    appId: "1:388757655613:web:aedd6ba996520d8739da54"
-  };
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWCUiCICoraIkT6QawtM18WenCzm4tBPI",
+      authDomain: "boms-c7893.firebaseapp.com",
+      projectId: "boms-c7893",
+      storageBucket: "boms-c7893.appspot.com",
+      messagingSenderId: "388757655613",
+      appId: "1:388757655613:web:aedd6ba996520d8739da54"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const storage = firebase.storage();
-  
-  const form = document.getElementById('orderForm');
-  const imageInput = document.getElementById('imageInput');
-  const imagePreview = document.getElementById('imagePreview');
-  const tailorInput = document.getElementById('tailor');
-  const tailorsList = document.getElementById('tailorsList');
-  const ordersTableBody = document.querySelector('#ordersTable tbody');
-  const searchInput = document.getElementById('searchInput');
-  const paginationDiv = document.getElementById('pagination');
-  const exportBtn = document.getElementById('exportBtn');
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
-  let orders = [];
-  let tailors = new Set();
-  const rowsPerPage = 50;
-  let currentPage = 1;
-  let editingId = null; // id of order currently being edited (null if adding)
+    const orderForm = document.getElementById('orderForm');
+    const preview = document.getElementById('preview');
+    const imageUpload = document.getElementById('imageUpload');
 
-  // Show image preview
-  imageInput.addEventListener('change', () => {
-    const file = imageInput.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      imagePreview.src = url;
-    } else {
-      imagePreview.src = '';
-    }
-  });
+    let imageFile = null;
 
-  // Add tailor to datalist if new
-  function addTailor(name) {
-    if (name && !tailors.has(name.trim())) {
-      tailors.add(name.trim());
-      const option = document.createElement('option');
-      option.value = name.trim();
-      tailorsList.appendChild(option);
-    }
-  }
-
-  // Render table rows for current page and filter
-  function renderTable() {
-    const searchText = searchInput.value.toLowerCase();
-    let filtered = orders.filter(o => o.teamName.toLowerCase().includes(searchText));
-
-    const totalPages = Math.ceil(filtered.length / rowsPerPage);
-    if (currentPage > totalPages) currentPage = totalPages || 1;
-
-    const startIdx = (currentPage - 1) * rowsPerPage;
-    const pageData = filtered.slice(startIdx, startIdx + rowsPerPage);
-
-    ordersTableBody.innerHTML = '';
-    pageData.forEach((order, index) => {
-      const tr = document.createElement('tr');
-
-      // Team name editable input
-      const teamNameTd = document.createElement('td');
-      const teamNameInput = document.createElement('input');
-      teamNameInput.type = 'text';
-      teamNameInput.value = order.teamName;
-      teamNameInput.addEventListener('input', (e) => {
-        order.teamName = e.target.value;
-        renderTable();
-      });
-      teamNameTd.appendChild(teamNameInput);
-      tr.appendChild(teamNameTd);
-
-      // Tailor editable input with addTailor logic
-      const tailorTd = document.createElement('td');
-      const tailorInput = document.createElement('input');
-      tailorInput.type = 'text';
-      tailorInput.value = order.tailor;
-      tailorInput.setAttribute('list', 'tailorsList');
-      tailorInput.addEventListener('input', (e) => {
-        order.tailor = e.target.value;
-        addTailor(order.tailor);
-        renderTable();
-      });
-      tailorTd.appendChild(tailorInput);
-      tr.appendChild(tailorTd);
-
-      // Status radio buttons inline
-      const statusTd = document.createElement('td');
-      ['Received', 'On going', 'Finished'].forEach(statusVal => {
-        const radioId = `status_${order.id}_${statusVal}`;
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = `status_${order.id}`;
-        radio.value = statusVal;
-        radio.id = radioId;
-        if (order.status === statusVal) radio.checked = true;
-        radio.addEventListener('change', () => {
-          order.status = statusVal;
-          renderTable();
-        });
-        const label = document.createElement('label');
-        label.htmlFor = radioId;
-        label.style.marginRight = '8px';
-        label.textContent = statusVal;
-        statusTd.appendChild(radio);
-        statusTd.appendChild(label);
-      });
-      tr.appendChild(statusTd);
-
-      // Due date editable
-      const dueDateTd = document.createElement('td');
-      const dueDateInput = document.createElement('input');
-      dueDateInput.type = 'date';
-      dueDateInput.value = order.dueDate || '';
-      dueDateInput.addEventListener('change', (e) => {
-        order.dueDate = e.target.value;
-        renderTable();
-      });
-      dueDateTd.appendChild(dueDateInput);
-      tr.appendChild(dueDateTd);
-
-      // Image preview cell
-      const imgTd = document.createElement('td');
-      imgTd.className = 'image-cell';
-      if (order.imageData) {
-        const img = document.createElement('img');
-        img.src = order.imageData;
-        imgTd.appendChild(img);
-      } else {
-        imgTd.textContent = '-';
+    imageUpload.addEventListener('change', (e) => {
+      imageFile = e.target.files[0];
+      if (imageFile) {
+        preview.src = URL.createObjectURL(imageFile);
       }
-      tr.appendChild(imgTd);
+    });
 
-      // Actions (edit/delete)
-      const actionsTd = document.createElement('td');
-      actionsTd.className = 'action-buttons';
+    orderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-      const editBtn = document.createElement('button');
-      editBtn.textContent = 'Edit';
-      editBtn.type = 'button';
-      editBtn.onclick = () => {
-        // Fill form with this order's data
-        editingId = order.id;
-        form.teamName.value = order.teamName;
-        form.tailor.value = order.tailor;
-        addTailor(order.tailor);
-        form.dueDate.value = order.dueDate || '';
-        // set radio buttons
-        [...form.status].forEach(radio => {
-          radio.checked = radio.value === order.status;
-        });
-        if (order.imageData) {
-          imagePreview.src = order.imageData;
+      try {
+        const docId = document.getElementById('docId').value;
+        const teamName = document.getElementById('teamName').value;
+        const tailor = document.getElementById('tailor').value;
+        const status = document.querySelector('input[name="status"]:checked').value;
+        const dueDate = document.getElementById('dueDate').value;
+
+        console.log("Form values:", { teamName, tailor, status, dueDate });
+
+        let imageUrl = preview.src;
+        if (imageFile) {
+          const filename = `images/${Date.now()}_${imageFile.name}`;
+          const storageRef = storage.ref(filename);
+          console.log("Uploading image to:", filename);
+          await storageRef.put(imageFile);
+          imageUrl = await storageRef.getDownloadURL();
+          console.log("Image URL:", imageUrl);
+        }
+
+        const data = { teamName, tailor, status, dueDate, imageUrl };
+        console.log("Final data to save:", data);
+
+        if (docId) {
+          console.log("Updating document ID:", docId);
+          await db.collection('orders').doc(docId).update(data);
         } else {
-          imagePreview.src = '';
+          console.log("Adding new document to 'orders'");
+          const ref = await db.collection('orders').add(data);
+          console.log("Document created with ID:", ref.id);
         }
-        // Can't set file input programmatically, so clear it
-        imageInput.value = '';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      };
-      actionsTd.appendChild(editBtn);
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = 'Delete';
-      deleteBtn.type = 'button';
-      deleteBtn.style.background = '#dc3545';
-      deleteBtn.style.color = 'white';
-      deleteBtn.onclick = () => {
-        if (confirm('Delete this order?')) {
-          orders = orders.filter(o => o.id !== order.id);
-          if (editingId === order.id) {
-            editingId = null;
-            form.reset();
-            imagePreview.src = '';
-          }
-          renderTable();
-        }
-      };
-      actionsTd.appendChild(deleteBtn);
-
-      tr.appendChild(actionsTd);
-
-      ordersTableBody.appendChild(tr);
+        orderForm.reset();
+        preview.src = '';
+        imageFile = null;
+        document.getElementById('docId').value = '';
+        alert('Order saved successfully.');
+      } catch (error) {
+        console.error('❌ Error saving data:', error);
+        alert('An error occurred while saving. Check console for details.');
+      }
     });
-
-    renderPagination(totalPages);
-  }
-
-  function renderPagination(totalPages) {
-    paginationDiv.innerHTML = '';
-    if (totalPages <= 1) return;
-
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      btn.className = i === currentPage ? 'active' : '';
-      btn.onclick = () => {
-        currentPage = i;
-        renderTable();
-      };
-      paginationDiv.appendChild(btn);
-    }
-  }
-
-  // Export to Excel CSV simple
-  exportBtn.addEventListener('click', () => {
-    if (orders.length === 0) {
-      alert('No orders to export.');
-      return;
-    }
-    let csv = 'Team Name,Tailor,Status,Due Date\n';
-    orders.forEach(o => {
-      const line = `"${o.teamName}","${o.tailor}","${o.status}","${o.dueDate || ''}"`;
-      csv += line + '\n';
-    });
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'orders.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const teamName = form.teamName.value.trim();
-    if (!teamName) {
-      alert('Team Name is required');
-      return;
-    }
-    const tailor = form.tailor.value.trim();
-    const status = form.status.value;
-    const dueDate = form.dueDate.value;
-
-    // Process image file if any
-    if (imageInput.files.length > 0) {
-      const file = imageInput.files[0];
-if (!file.type.startsWith('image/')) {
-alert('Please select a valid image file.');
-return;
-}
-const reader = new FileReader();
-reader.onload = () => {
-saveOrder(teamName, tailor, status, dueDate, reader.result);
-};
-reader.readAsDataURL(file);
-} else {
-// No image file selected, keep existing if editing
-const existingImageData = editingId ? (orders.find(o => o.id === editingId)?.imageData || '') : '';
-saveOrder(teamName, tailor, status, dueDate, existingImageData);
-}
-});
-
-function saveOrder(teamName, tailor, status, dueDate, imageData) {
-  addTailor(tailor);
-
-  const order = { teamName, tailor, status, dueDate, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
-
-  if (imageData.startsWith('data:image/')) {
-    const id = editingId || (Date.now() + Math.random().toString(36).slice(2));
-    const storageRef = storage.ref().child(`images/${id}.jpg`);
-    storageRef.putString(imageData, 'data_url').then(snapshot => {
-      snapshot.ref.getDownloadURL().then(downloadURL => {
-        order.imageURL = downloadURL;
-
-        if (editingId) {
-          db.collection('orders').doc(editingId).set(order).then(renderFromFirebase);
-        } else {
-          db.collection('orders').add(order).then(renderFromFirebase);
-        }
-      });
-    });
-  } else {
-    if (editingId) {
-      db.collection('orders').doc(editingId).set(order).then(renderFromFirebase);
-    } else {
-      db.collection('orders').add(order).then(renderFromFirebase);
-    }
-  }
-
-  form.reset();
-  imagePreview.src = '';
-  editingId = null;
-}
-
-
-// Initialize empty table
-function renderFromFirebase() {
-  db.collection('orders').orderBy('timestamp', 'desc').get().then(snapshot => {
-    orders = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      imageData: doc.data().imageURL || ''
-    }));
-    renderTable();
-  });
-}
-
-renderFromFirebase();
-
-
-</script> </body> </html>
+  </script>
+</body>
+</html>
