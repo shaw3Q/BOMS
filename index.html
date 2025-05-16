@@ -1,214 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Order Form with Cloudinary & Firebase</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background-color: #f4f4f4;
-    display: flex;
-    gap: 20px;
-  }
-  .form-container {
-    flex: 0 0 20%;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  .list-container {
-    flex: 0 0 80%;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    overflow-x: auto;
-  }
-  label {
-    display: block;
-    margin-top: 10px;
-  }
-  input[type="text"],
-  input[type="date"],
-  input[type="file"],
-  input[list] {
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-  .status-options {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-top: 5px;
-  }
-  .status-options input[type="radio"] {
-    display: none;
-  }
-  .status-options label {
-    padding: 10px;
-    text-align: center;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    user-select: none;
-    background-color: #f0f0f0;
-    transition: background-color 0.3s,color 0.3s;
-  }
-  .status-options input[type="radio"]:checked + label {
-    color: white;
-  }
-  /* Status colors for form */
-  #received:checked + label { background-color: #007bff; }
-  #ongoing:checked + label { background-color: #ffc107; color: black; }
-  #finished:checked + label { background-color: #28a745; }
-  #released:checked + label { background-color: #6c757d; }
-
-  .preview-img {
-    margin-top: 10px;
-    max-width: 100%;
-    height: auto;
-    display: block;
-  }
-  button {
-    margin-top: 20px;
-    padding: 10px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  button:hover {
-    background-color: #0056b3;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    table-layout: auto;
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: left;
-    vertical-align: middle;
-  }
-  th.status, td.status {
-    width: 120px;
-  }
-  th.image, td.image {
-    width: 100px;
-  }
-  th.actions, td.actions {
-    width: 80px;
-  }
-  /* Status colors for table cells */
-  td.status[data-status="Received"] { background-color: #007bff; color: white; }
-  td.status[data-status="On going"] { background-color: #ffc107; color: black; }
-  td.status[data-status="Finished"] { background-color: #28a745; color: white; }
-  td.status[data-status="Released"] { background-color: #6c757d; color: white; }
-  /* Image styles */
-  td.image img {
-    max-width: 80px;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  /* Action buttons style */
-  .action-btn {
-    background: none;
-    border: none;
-    color: #007bff;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 4px 6px;
-    margin: 0 2px;
-  }
-  .action-btn:hover {
-    text-decoration: underline;
-  }
-  #loadMoreBtn, #exportBtn {
-    margin-right: 10px;
-  }
-  #actionsContainer {
-    margin-top: 10px;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Order Form with Cloudinary & Firebase</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f4;
+    }
+    .container {
+      width: 80%;
+      margin: 0 auto;
+      display: flex;
+      gap: 20px;
+    }
+    .form-container {
+      flex: 0 0 20%;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .list-container {
+      flex: 0 0 80%;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .form-card label {
+      display: block;
+      margin-top: 10px;
+    }
+    .form-card input[type="text"],
+    .form-card input[type="date"],
+    .form-card input[type="file"],
+    .form-card input[list] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .status-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .status-options input[type="radio"] {
+      display: none;
+    }
+    .status-options label {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: #f0f0f0;
+      user-select: none;
+    }
+    .status-options input[type="radio"]:checked + label {
+      background-color: #007bff;
+      color: white;
+      border-color: #007bff;
+    }
+    .preview-img {
+      margin-top: 10px;
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      table-layout: auto;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    /* Status colors for list and form */
+    .status-received {
+      color: white;
+      background-color: #ffc107; /* Amber */
+      padding: 3px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: center;
+    }
+    .status-ongoing {
+      color: white;
+      background-color: #17a2b8; /* Teal */
+      padding: 3px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: center;
+    }
+    .status-finished {
+      color: white;
+      background-color: #28a745; /* Green */
+      padding: 3px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: center;
+    }
+    .status-released {
+      color: white;
+      background-color: #6c757d; /* Gray */
+      padding: 3px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <div class="form-container">
+      <h2>Order Form</h2>
+      <div class="form-card">
+        <form id="orderForm">
+          <input type="hidden" id="docId" />
 
-<div class="form-container">
-  <h2>Order Form</h2>
-  <form id="orderForm">
-    <input type="hidden" id="docId" />
+          <label>Team Name</label>
+          <input type="text" id="teamName" required />
 
-    <label>Team Name</label>
-    <input type="text" id="teamName" required />
+          <label>Tailor</label>
+          <input list="tailorList" id="tailor" />
+          <datalist id="tailorList"></datalist>
 
-    <label>Tailor</label>
-    <input list="tailorList" id="tailor" placeholder="Select or type tailor" />
-    <datalist id="tailorList"></datalist>
+          <label>Artist</label>
+          <input list="artistList" id="artist" />
+          <datalist id="artistList"></datalist>
 
-    <label>Artist</label>
-    <input list="artistList" id="artist" placeholder="Select or type artist" />
-    <datalist id="artistList"></datalist>
+          <label>Status</label>
+          <div class="status-options">
+            <input type="radio" id="received" name="status" value="Received" checked />
+            <label for="received" class="status-received">Received</label>
 
-    <label>Status</label>
-    <div class="status-options">
-      <input type="radio" id="received" name="status" value="Received" checked>
-      <label for="received">Received</label>
+            <input type="radio" id="ongoing" name="status" value="On going" />
+            <label for="ongoing" class="status-ongoing">On going</label>
 
-      <input type="radio" id="ongoing" name="status" value="On going">
-      <label for="ongoing">On going</label>
+            <input type="radio" id="finished" name="status" value="Finished" />
+            <label for="finished" class="status-finished">Finished</label>
 
-      <input type="radio" id="finished" name="status" value="Finished">
-      <label for="finished">Finished</label>
+            <input type="radio" id="released" name="status" value="Released" />
+            <label for="released" class="status-released">Released</label>
+          </div>
 
-      <input type="radio" id="released" name="status" value="Released">
-      <label for="released">Released</label>
+          <label>Due Date</label>
+          <input type="date" id="dueDate" />
+
+          <label>Upload Image</label>
+          <input type="file" id="imageUpload" accept="image/*" />
+          <img id="preview" class="preview-img" />
+
+          <button type="submit">Save</button>
+        </form>
+      </div>
     </div>
 
-    <label>Due Date</label>
-    <input type="date" id="dueDate" />
-
-    <label>Upload Image</label>
-    <input type="file" id="imageUpload" accept="image/*" />
-    <img id="preview" class="preview-img" />
-
-    <button type="submit">Save</button>
-  </form>
-</div>
-
-<div class="list-container">
-  <h2>Orders</h2>
-  <input type="text" id="searchTeam" placeholder="Search team name..." />
-
-  <div id="actionsContainer">
-    <button id="loadMoreBtn">Load More</button>
-    <button id="exportBtn">Export to Excel</button>
+    <div class="list-container">
+      <h2>Orders</h2>
+      <input type="text" id="searchTeam" placeholder="Search team name..." />
+      <table id="ordersTable">
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Tailor</th>
+            <th>Artist</th>
+            <th>Status</th>
+            <th>Due Date</th>
+            <th>Image</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button id="loadMoreBtn" style="margin-top: 10px;">Load More</button>
+    </div>
   </div>
-
-  <table id="ordersTable" aria-label="Orders list">
-    <thead>
-      <tr>
-        <th>Team</th>
-        <th>Tailor</th>
-        <th>Artist</th>
-        <th class="status">Status</th>
-        <th>Due Date</th>
-        <th class="image">Image</th>
-        <th class="actions">Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
