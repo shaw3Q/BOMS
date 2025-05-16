@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Order Form without Image Upload</title>
+  <title>Order Form with Firebase and Image Upload</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -18,23 +18,41 @@
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    label {
+    .form-card label {
       display: block;
       margin-top: 10px;
     }
-    input[type="text"],
-    input[type="date"],
-    input[list] {
+    .form-card input[type="text"],
+    .form-card input[type="date"],
+    .form-card input[list],
+    .form-card input[type="file"] {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
       border: 1px solid #ccc;
       border-radius: 4px;
+      box-sizing: border-box;
     }
     .status-options {
       display: flex;
       gap: 10px;
       margin-top: 5px;
+    }
+    .status-options input[type="radio"] {
+      margin-right: 5px;
+      cursor: pointer;
+    }
+    .status-options label {
+      cursor: pointer;
+      user-select: none;
+    }
+    .preview-img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
     }
     button {
       margin-top: 20px;
@@ -44,6 +62,7 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      font-size: 16px;
     }
     button:hover {
       background-color: #0056b3;
@@ -53,41 +72,51 @@
 <body>
   <h2>Order Form</h2>
   <div class="container">
-    <form id="orderForm">
-      <input type="hidden" id="docId" />
-      <label>Team Name</label>
-      <input type="text" id="teamName" required />
+    <div class="form-card">
+      <form id="orderForm">
+        <input type="hidden" id="docId" />
+        
+        <label for="teamName">Team Name</label>
+        <input type="text" id="teamName" required />
 
-      <label>Tailor</label>
-      <input list="tailorList" id="tailor" />
-      <datalist id="tailorList"></datalist>
+        <label for="tailor">Tailor</label>
+        <input list="tailorList" id="tailor" autocomplete="off" />
+        <datalist id="tailorList"></datalist>
 
-      <label>Status</label>
-      <div class="status-options">
-        <input type="radio" id="received" name="status" value="Received" checked />
-        <label for="received">Received</label>
+        <label>Status</label>
+        <div class="status-options">
+          <input type="radio" id="received" name="status" value="Received" checked />
+          <label for="received">Received</label>
 
-        <input type="radio" id="ongoing" name="status" value="On going" />
-        <label for="ongoing">On going</label>
+          <input type="radio" id="ongoing" name="status" value="On going" />
+          <label for="ongoing">On going</label>
 
-        <input type="radio" id="finished" name="status" value="Finished" />
-        <label for="finished">Finished</label>
+          <input type="radio" id="finished" name="status" value="Finished" />
+          <label for="finished">Finished</label>
 
-        <input type="radio" id="delivered" name="status" value="Delivered" />
-        <label for="delivered">Delivered</label>
-      </div>
+          <input type="radio" id="delivered" name="status" value="Delivered" />
+          <label for="delivered">Delivered</label>
+        </div>
 
-      <label>Due Date</label>
-      <input type="date" id="dueDate" />
+        <label for="dueDate">Due Date</label>
+        <input type="date" id="dueDate" />
 
-      <button type="submit">Save</button>
-    </form>
+        <label for="imageUpload">Upload Image</label>
+        <input type="file" id="imageUpload" accept="image/*" />
+        <img id="preview" class="preview-img" alt="Image preview" />
+
+        <button type="submit">Save</button>
+      </form>
+    </div>
   </div>
 
+  <!-- Firebase scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-storage-compat.js"></script>
 
   <script>
+    // Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCWCUiCICoraIkT6QawtM18WenCzm4tBPI",
       authDomain: "boms-c7893.firebaseapp.com",
@@ -97,35 +126,96 @@
       appId: "1:388757655613:web:aedd6ba996520d8739da54"
     };
 
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const storage = firebase.storage();
 
+    // DOM elements
     const orderForm = document.getElementById('orderForm');
+    const preview = document.getElementById('preview');
+    const imageUpload = document.getElementById('imageUpload');
+
+    // Variable to store image file
+    let imageFile = null;
+
+    // Show preview when file selected
+    imageUpload.addEventListener('change', (e) => {
+      imageFile = e.target.files[0];
+      if (imageFile) {
+        preview.src = URL.createObjectURL(imageFile);
+      } else {
+        preview.src = '';
+      }
+    });
+
+    // Populate Tailor datalist from Firestore dynamically (optional)
+    async function loadTailors() {
+      try {
+        const snapshot = await db.collection('orders').get();
+        const tailors = new Set();
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.tailor) tailors.add(data.tailor);
+        });
+
+        const tailorList = document.getElementById('tailorList');
+        tailorList.innerHTML = '';
+        tailors.forEach(t => {
+          const option = document.createElement('option');
+          option.value = t;
+          tailorList.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading tailors:', error);
+      }
+    }
+    loadTailors();
 
     orderForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       try {
         const docId = document.getElementById('docId').value;
-        const teamName = document.getElementById('teamName').value;
-        const tailor = document.getElementById('tailor').value;
+        const teamName = document.getElementById('teamName').value.trim();
+        const tailor = document.getElementById('tailor').value.trim();
         const status = document.querySelector('input[name="status"]:checked').value;
         const dueDate = document.getElementById('dueDate').value;
 
-        const data = { teamName, tailor, status, dueDate };
+        let imageUrl = '';
 
-        if (docId) {
-          await db.collection('orders').doc(docId).update(data);
-        } else {
-          await db.collection('orders').add(data);
+        // Upload image if selected
+        if (imageFile) {
+          const filename = `images/${Date.now()}_${imageFile.name}`;
+          const storageRef = storage.ref(filename);
+          await storageRef.put(imageFile);
+          imageUrl = await storageRef.getDownloadURL();
         }
 
+        // Prepare data object
+        const data = { teamName, tailor, status, dueDate, imageUrl };
+
+        // Save or update document
+        if (docId) {
+          await db.collection('orders').doc(docId).update(data);
+          console.log('Document updated:', docId);
+        } else {
+          const ref = await db.collection('orders').add(data);
+          console.log('Document added with ID:', ref.id);
+        }
+
+        // Reset form
         orderForm.reset();
+        preview.src = '';
+        imageFile = null;
         document.getElementById('docId').value = '';
-        alert('Order saved successfully.');
+
+        alert('Order saved successfully!');
+        loadTailors(); // reload tailor list if needed
+
       } catch (error) {
         console.error('Error saving data:', error);
-        alert('Error saving data, check console.');
+        alert('Error saving data. Check console for details.');
       }
     });
   </script>
