@@ -197,6 +197,38 @@
     font-size: 16px;
   }
 }
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    color: white;
+    display: inline-block;
+    font-weight: bold;
+    text-align: center;
+	font-size: 14px;
+	text-transform: uppercase;
+  }
+  .status-received { background-color: #007bff; }
+  .status-ongoing  { background-color: #ffc107; color: black; }
+  .status-finished { background-color: #28a745; }
+  .status-released { background-color: #6c757d; }
+
+  .date-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    color: white;
+    display: inline-block;
+	font-size: 14px;
+	text-transform: uppercase;
+  }
+  .due-soon { background-color: #ffc107; color: black; }
+  .overdue { background-color: #dc3545; }
+  .on-time { background-color: #28a745; }
+  
+  td.status, td:nth-child(5) {
+    text-align: center;
+  }
+  
 </style>
 </head>
 <body>
@@ -210,9 +242,12 @@
     <input type="hidden" id="docId" />
     <label>Team Name</label>
     <input type="text" id="teamName" required />
-    <label>Tailor</label>
+    <label>Tailor Upper</label>
     <input list="tailorList" id="tailor" placeholder="Select or type tailor" />
     <datalist id="tailorList"></datalist>
+	<label>Tailor Lower</label>
+    <input list="tailorLowerList" id="tailorLower" placeholder="Lower Section Tailor" />
+    <datalist id="tailorLowerList"></datalist>
     <label>Artist</label>
     <input list="artistList" id="artist" placeholder="Select or type artist" />
     <datalist id="artistList"></datalist>
@@ -241,7 +276,8 @@
     <thead>
       <tr>
         <th class="sortable" data-key="teamName">Team</th>
-        <th class="sortable" data-key="tailor">Tailor</th>
+        <th class="sortable" data-key="tailor">Tailor Upper</th>
+		<th class="sortable" data-key="tailorLower">Tailor Lower</th>
         <th class="sortable" data-key="artist">Artist</th>
         <th class="sortable status" data-key="status">Status</th>
         <th class="sortable" data-key="dueDate">Due Date</th>
@@ -276,7 +312,9 @@ const form = document.getElementById('orderForm');
 const teamNameInput = document.getElementById('teamName');
 const tailorInput = document.getElementById('tailor');
 const artistInput = document.getElementById('artist');
+const tailorLowerInput = document.getElementById('tailorLower');
 const tailorList = document.getElementById('tailorList');
+const tailorLowerList = document.getElementById('tailorLowerList');
 const artistList = document.getElementById('artistList');
 const statusRadios = document.querySelectorAll('input[name="status"]');
 const dueDateInput = document.getElementById('dueDate');
@@ -290,7 +328,7 @@ const listContainer = document.getElementById('listContainer');
 const loadingOverlay = document.getElementById('loadingOverlay');
 
 let orders = [], filteredOrders = [], displayLimit = 15;
-let tailorSet = new Set(), artistSet = new Set();
+let tailorSet = new Set(), artistSet = new Set(), tailorLowerSet = new Set();
 let sortKey = '', sortAsc = true;
 
 function compressImage(file, maxSizeKB = 500, quality = 0.7) {
@@ -338,18 +376,46 @@ function renderOrders() {
   for (const order of filteredOrders) {
     if (count++ >= displayLimit) break;
     const tr = document.createElement('tr');
-    ['teamName', 'tailor', 'artist'].forEach(key => {
+    ['teamName', 'tailor', 'tailorLower', 'artist'].forEach(key => {
       const td = document.createElement('td');
       td.textContent = order[key] || '';
       tr.appendChild(td);
     });
+
     const tdStatus = document.createElement('td');
-    tdStatus.className = 'status'; tdStatus.textContent = order.status;
-    tdStatus.dataset.status = order.status;
+    tdStatus.className = 'status';
+    const statusBadge = document.createElement('span');
+    statusBadge.classList.add('status-badge');
+    switch ((order.status || '').toLowerCase()) {
+      case 'received': statusBadge.classList.add('status-received'); statusBadge.textContent = 'RECEIVED'; break;
+      case 'on going': statusBadge.classList.add('status-ongoing'); statusBadge.textContent = 'ON GOING'; break;
+      case 'finished': statusBadge.classList.add('status-finished'); statusBadge.textContent = 'FINISHED'; break;
+      case 'released': statusBadge.classList.add('status-released'); statusBadge.textContent = 'RELEASED'; break;
+      default: statusBadge.textContent = (order.status || '-').toUpperCase();
+    }
+    tdStatus.appendChild(statusBadge);
     tr.appendChild(tdStatus);
+
     const tdDue = document.createElement('td');
-    tdDue.textContent = order.dueDate ? new Date(order.dueDate).toLocaleDateString() : '';
+    tdDue.style.textAlign = 'center';
+    if (order.dueDate) {
+      const date = new Date(order.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const badge = document.createElement('span');
+      badge.classList.add('date-badge');
+
+      if (date < today) badge.classList.add('overdue');
+      else if (date.getTime() === today.getTime()) badge.classList.add('due-soon');
+      else badge.classList.add('on-time');
+
+      badge.textContent = date.toLocaleDateString().toUpperCase();
+      tdDue.appendChild(badge);
+    } else {
+      tdDue.textContent = '-';
+    }
     tr.appendChild(tdDue);
+
     const tdImg = document.createElement('td');
     tdImg.className = 'image';
     if (order.imageUrl) {
@@ -359,6 +425,7 @@ function renderOrders() {
       tdImg.appendChild(img);
     } else tdImg.textContent = '-';
     tr.appendChild(tdImg);
+
     const tdAct = document.createElement('td');
     tdAct.className = 'actions';
     ['✏️', '🗑️'].forEach((sym, i) => {
@@ -372,18 +439,53 @@ function renderOrders() {
   }
 }
 
+function loadOrderToForm(order) {
+  docIdInput.value = order.id || '';
+  teamNameInput.value = order.teamName || '';
+  tailorInput.value = order.tailor || '';
+  artistInput.value = order.artist || '';
+  tailorLowerInput.value = order.tailorLower || '';
+
+  statusRadios.forEach(r => r.checked = r.value === order.status);
+
+  // Fix dueDate loading
+  if (order.dueDate) {
+    const parsed = new Date(order.dueDate);
+    if (!isNaN(parsed.getTime())) {
+      dueDateInput.value = parsed.toISOString().split('T')[0];
+    } else {
+      dueDateInput.value = '';
+    }
+  } else {
+    dueDateInput.value = '';
+  }
+
+  // Fix image URL preview
+  if (order.imageUrl && typeof order.imageUrl === 'string' && order.imageUrl.startsWith('http')) {
+    previewImg.src = order.imageUrl;
+    previewImg.style.display = 'block';
+  } else {
+    previewImg.src = '';
+    previewImg.style.display = 'none';
+    imageUpload.value = '';
+  }
+}
+
 function sortOrders() {
+  const priorityOrder = ['Received', 'On going', 'Finished', 'Released'];
+
   filteredOrders.sort((a, b) => {
-    // 1. Sort by status priority: Received → On going → Finished → Released
-    const priorityOrder = ['Received', 'On going', 'Finished', 'Released'];
+    const dateA = a.dueDate ? new Date(a.dueDate) : new Date(8640000000000000);
+    const dateB = b.dueDate ? new Date(b.dueDate) : new Date(8640000000000000);
     const statusA = a.status || '';
     const statusB = b.status || '';
-    const priorityDiff = priorityOrder.indexOf(statusA) - priorityOrder.indexOf(statusB);
-    if (priorityDiff !== 0) return priorityDiff;
 
-    const dateA = a.dueDate ? new Date(a.dueDate) : new Date(8640000000000000); // max date for missing
-    const dateB = b.dueDate ? new Date(b.dueDate) : new Date(8640000000000000);
-    return dateA - dateB;
+    // Sort by due date ascending
+    const dateDiff = dateA - dateB;
+    if (dateDiff !== 0) return dateDiff;
+
+    // If due date is the same, use status priority
+    return priorityOrder.indexOf(statusA) - priorityOrder.indexOf(statusB);
   });
 }
 
@@ -421,6 +523,7 @@ form.addEventListener('submit', async e => {
     teamName: teamNameInput.value.trim().toUpperCase(),
     tailor: tailorInput.value.trim().toUpperCase(),
     artist: artistInput.value.trim().toUpperCase(),
+    tailorLower: document.getElementById('tailorLower').value.trim().toUpperCase(),
     status: [...statusRadios].find(r => r.checked).value,
     dueDate: dueDateInput.value ? new Date(dueDateInput.value).toISOString() : null,
     imageUrl: previewImg.src.includes('blob:') && imageUpload.files.length > 0 ?
@@ -454,23 +557,15 @@ async function deleteOrder(id) {
   }
 }
 
-function loadOrderToForm(order) {
-  docIdInput.value = order.id;
-  teamNameInput.value = order.teamName || '';
-  tailorInput.value = order.tailor || '';
-  artistInput.value = order.artist || '';
-  statusRadios.forEach(r => r.checked = r.value === order.status);
-  dueDateInput.value = order.dueDate ? order.dueDate.split('T')[0] : '';
-  previewImg.src = order.imageUrl || '';
-  previewImg.style.display = order.imageUrl ? 'block' : 'none';
-}
-
 function updateTailorArtistLists(order) {
   if (order.tailor) tailorSet.add(order.tailor);
   if (order.artist) artistSet.add(order.artist);
+  if (order.tailorLower) tailorLowerSet.add(order.tailorLower);
   tailorList.innerHTML = [...tailorSet].map(t => `<option value="${t}">`).join('');
   artistList.innerHTML = [...artistSet].map(a => `<option value="${a}">`).join('');
+  tailorLowerList.innerHTML = [...tailorLowerSet].map(t => `<option value="${t}">`).join('');
 }
+
 
 async function fetchOrders() {
   const snap = await db.collection('orders').get();
@@ -480,19 +575,37 @@ async function fetchOrders() {
   filteredOrders = [...orders];
   sortOrders(); renderOrders();
 }
+
+exportBtn.addEventListener('click', async () => {
+  const snapshot = await firebase.firestore().collection('orders').get();
+  const rows = [['Team', 'Tailor Upper', 'Tailor Lower', 'Artist', 'Status', 'Due Date', 'Image URL']];
+
+  snapshot.forEach(doc => {
+    const o = doc.data();
+    rows.push([
+      o.teamName || '',
+      o.tailor || '',
+      o.tailorLower || '',
+      o.artist || '',
+      o.status || '',
+      o.dueDate ? new Date(o.dueDate).toLocaleDateString() : '',
+      o.imageUrl || ''
+    ]);
+  });
+
+  const csv = rows.map(r => r.map(val => '"' + val.replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'all_orders.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
+
 fetchOrders();
 
-exportBtn.addEventListener('click', () => {
-  const rows = [['Team', 'Tailor', 'Artist', 'Status', 'Due Date', 'Image URL']];
-  filteredOrders.slice(0, displayLimit).forEach(o =>
-    rows.push([o.teamName, o.tailor, o.artist, o.status,
-      o.dueDate ? new Date(o.dueDate).toLocaleDateString() : '', o.imageUrl || ''])
-  );
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const uri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  const a = document.createElement('a');
-  a.href = uri; a.download = 'orders.csv'; a.click();
-});
+
 </script>
 </body>
 </html>
