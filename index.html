@@ -373,11 +373,18 @@ function renderOrders() {
 }
 
 function sortOrders() {
-  if (!sortKey) return;
   filteredOrders.sort((a, b) => {
-    const valA = (a[sortKey] || '').toString().toLowerCase();
-    const valB = (b[sortKey] || '').toString().toLowerCase();
-    return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    // 1. Sort by status priority
+    const priorityOrder = ['Received', 'On going', 'Finished', 'Released'];
+    const statusA = a.status || '';
+    const statusB = b.status || '';
+    const priorityDiff = priorityOrder.indexOf(statusA) - priorityOrder.indexOf(statusB);
+    if (priorityDiff !== 0) return priorityDiff;
+
+    // 2. Within same status, sort by dueDate DESC (latest first)
+    const dateA = a.dueDate ? new Date(a.dueDate) : new Date(0); // nulls treated as oldest
+    const dateB = b.dueDate ? new Date(b.dueDate) : new Date(0);
+    return dateB - dateA; // descending
   });
 }
 
