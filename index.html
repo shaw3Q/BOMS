@@ -246,7 +246,7 @@
     <input list="tailorList" id="tailor" placeholder="Select or type tailor" />
     <datalist id="tailorList"></datalist>
 	<label>Tailor Lower</label>
-    <input list="tailorLowerList" id="tailorLower" placeholder="Lower Section Tailor" />
+    <input list="tailorLowerList" id="tailorLower" placeholder="Select or type tailor" />
     <datalist id="tailorLowerList"></datalist>
     <label>Artist</label>
     <input list="artistList" id="artist" placeholder="Select or type artist" />
@@ -442,13 +442,13 @@ function renderOrders() {
 function loadOrderToForm(order) {
   docIdInput.value = order.id || '';
   teamNameInput.value = order.teamName || '';
+  teamNameInput.disabled = true; // disable editing
   tailorInput.value = order.tailor || '';
   artistInput.value = order.artist || '';
   tailorLowerInput.value = order.tailorLower || '';
 
   statusRadios.forEach(r => r.checked = r.value === order.status);
 
-  // Fix dueDate loading
   if (order.dueDate) {
     const parsed = new Date(order.dueDate);
     if (!isNaN(parsed.getTime())) {
@@ -460,7 +460,6 @@ function loadOrderToForm(order) {
     dueDateInput.value = '';
   }
 
-  // Fix image URL preview
   if (order.imageUrl && typeof order.imageUrl === 'string' && order.imageUrl.startsWith('http')) {
     previewImg.src = order.imageUrl;
     previewImg.style.display = 'block';
@@ -468,6 +467,27 @@ function loadOrderToForm(order) {
     previewImg.src = '';
     previewImg.style.display = 'none';
     imageUpload.value = '';
+  }
+
+  // Change Save button to Update and show Cancel
+  const saveBtn = form.querySelector('button[type="submit"]');
+  saveBtn.textContent = 'Update';
+  if (!document.getElementById('cancelBtn')) {
+    const cancelBtn = document.createElement('button');
+    cancelBtn.id = 'cancelBtn';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.type = 'button';
+    cancelBtn.style.marginLeft = '10px';
+    cancelBtn.onclick = () => {
+      form.reset();
+      docIdInput.value = '';
+      teamNameInput.disabled = false;
+      saveBtn.textContent = 'Save';
+      previewImg.src = '';
+      previewImg.style.display = 'none';
+      cancelBtn.remove();
+    };
+    saveBtn.insertAdjacentElement('afterend', cancelBtn);
   }
 }
 
@@ -551,6 +571,11 @@ imageUpload.addEventListener('change', async () => {
 });
 
 async function deleteOrder(id) {
+  const password = prompt('Enter password to confirm deletion:');
+  if (password !== 'benjsportswear') {
+    alert('Incorrect password. Deletion canceled.');
+    return;
+  }
   if (confirm('Delete this order?')) {
     await db.collection('orders').doc(id).delete();
     fetchOrders();
