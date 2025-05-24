@@ -510,7 +510,7 @@ function renderOrders() {
     const editBtn = document.createElement('button');
     editBtn.className = 'action-btn';
     editBtn.textContent = 'Edit';
-    editBtn.onclick = () => populateForm(order);
+    editBtn.onclick = () => loadOrderToForm(order);
 
     const delBtn = document.createElement('button');
     delBtn.className = 'action-btn';
