@@ -255,7 +255,10 @@
   pointer-events: none;
 }
 
-  
+  #clientURL {
+  text-transform: none !important; /* override if needed */
+}
+
 </style>
 </head>
 <body>
@@ -693,7 +696,7 @@ form.addEventListener('submit', async e => {
     teamName: teamNameInput.value.trim().toUpperCase(),
 	clientName: clientNameInput.value.trim().toUpperCase(),
 	clientNo: clientNoInput.value.trim().toUpperCase(),
-    clientURL: clientURLInput.value.trim().toLowerCase(),
+    clientURL: clientURLInput.value.trim(),
     tailor: tailorInput.value.trim().toUpperCase(),
     artist: artistInput.value.trim().toUpperCase(),
     tailorLower: document.getElementById('tailorLower').value.trim().toUpperCase(),
