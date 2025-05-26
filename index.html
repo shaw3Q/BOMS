@@ -304,7 +304,7 @@
 </div>
 <div class="list-container" id="listContainer">
   <h2>Orders</h2>
-  <input type="text" id="searchTeam" placeholder="Search team, tailor, or artist..." />
+  <input type="text" id="searchTeam" placeholder="Search team, client, tailor, or artist..." />
   <div id="actionsContainer">
     <button id="exportBtn">Export to Excel</button>
 	
@@ -665,7 +665,7 @@ function sortOrders() {
 function filterOrders() {
   const s = searchTeamInput.value.trim().toLowerCase();
   filteredOrders = orders.filter(o =>
-    [o.teamName, o.tailor, o.artist].some(f => (f || '').toLowerCase().includes(s))
+    [o.teamName, o.tailor, o.artist, o.clientName].some(f => (f || '').toLowerCase().includes(s))
   );
   displayLimit = 15;
   sortOrders();
