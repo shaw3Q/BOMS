@@ -31,9 +31,6 @@
   }
   .form-container input,
   .form-container select,
-  .form-container textarea {
-    text-transform: uppercase;
-  }
   .list-container {
     flex: 0 0 80%;
     background: white;
@@ -272,6 +269,12 @@
     <input type="hidden" id="docId" />
     <label>Team Name</label>
     <input type="text" id="teamName" required />
+	<label>Client Name</label>
+	<input type="text" id="clientName" placeholder="Client Name" />
+	<label>Client URL</label>
+	<input type="text" id="clientURL" placeholder="https://..." />
+	<label>Client No.</label>
+	<input id="clientNo" type="text" pattern="^(09|\+639)\d{9}$" placeholder="09xxxxxxxxx" title="Start with 09 or +639 followed by 9 digits" />
     <label>Tailor Upper</label>
     <input list="tailorList" id="tailor" placeholder="Select or type tailor" />
     <datalist id="tailorList"></datalist>
@@ -341,6 +344,9 @@ const UPLOAD_PRESET = 'upload_preset_boms';
 // Elements
 const form = document.getElementById('orderForm');
 const teamNameInput = document.getElementById('teamName');
+const clientNameInput = document.getElementById('clientName');
+const clientURLInput = document.getElementById('clientURL');
+const clientNoInput = document.getElementById('clientNo');
 const tailorInput = document.getElementById('tailor');
 const artistInput = document.getElementById('artist');
 const tailorLowerInput = document.getElementById('tailorLower');
@@ -411,19 +417,13 @@ function renderOrders() {
   const activeOrders = filteredOrders.filter(order => {
     const status = (order.status || '').toLowerCase();
     const dueDate = order.dueDate ? new Date(order.dueDate) : null;
-    return (
-      status !== 'released' || 
-      (dueDate && dueDate >= today)
-    );
+    return status !== 'released' || (dueDate && dueDate >= today);
   });
 
   const completedReleasedOrders = filteredOrders.filter(order => {
     const status = (order.status || '').toLowerCase();
     const dueDate = order.dueDate ? new Date(order.dueDate) : null;
-    return (
-      status === 'released' &&
-      dueDate && dueDate < today
-    );
+    return status === 'released' && dueDate && dueDate < today;
   });
 
   const sortedOrders = [...activeOrders, ...completedReleasedOrders];
@@ -434,19 +434,64 @@ function renderOrders() {
 
     const tr = document.createElement('tr');
 
-    // Add class for archived released orders (overdue)
     const status = (order.status || '').toLowerCase();
     const dueDate = order.dueDate ? new Date(order.dueDate) : null;
     if (status === 'released' && dueDate && dueDate < today) {
       tr.classList.add('archived-row');
     }
+	
+    // Team Name + Client Info combined cell
+    const tdTeam = document.createElement('td');
+    tdTeam.style.verticalAlign = 'middle';
 
-    ['teamName', 'tailor', 'tailorLower', 'artist'].forEach(key => {
-      const td = document.createElement('td');
-      td.textContent = order[key] || '';
-      tr.appendChild(td);
-    });
+    // Team name bold
+	const teamNameDiv = document.createElement('div');
+	teamNameDiv.textContent = order.teamName || '';
+	teamNameDiv.style.fontWeight = '600';
+	teamNameDiv.style.fontSize = '1rem';
+	tdTeam.appendChild(teamNameDiv);
 
+    // Client info below team name, simple text (no icons)
+	if (order.clientName) {
+	  const clientDiv = document.createElement('div');
+	  clientDiv.style.marginTop = '4px';
+
+	  const clientLink = document.createElement('a');
+	  clientLink.href = order.clientURL || '#';
+	  clientLink.target = '_blank';
+	  clientLink.style.color = '#007bff';
+	  clientLink.style.textDecoration = 'none';
+	  clientLink.style.fontSize = '0.9rem';
+	  clientLink.textContent = order.clientName;
+
+	  const clientNoDiv = document.createElement('div');
+	  clientNoDiv.textContent = order.clientNo || '';
+	  clientNoDiv.style.fontSize = '0.8rem';
+	  clientNoDiv.style.color = '#777';
+
+	  clientDiv.appendChild(clientLink);
+	  clientDiv.appendChild(clientNoDiv);
+	  tdTeam.appendChild(clientDiv);
+	}
+
+    tr.appendChild(tdTeam);
+
+    // Tailor
+    const tdTailor = document.createElement('td');
+    tdTailor.textContent = order.tailor || '';
+    tr.appendChild(tdTailor);
+
+    // Tailor Lower
+    const tdTailorLower = document.createElement('td');
+    tdTailorLower.textContent = order.tailorLower || '';
+    tr.appendChild(tdTailorLower);
+
+    // Artist
+    const tdArtist = document.createElement('td');
+    tdArtist.textContent = order.artist || '';
+    tr.appendChild(tdArtist);
+
+    // Status with badge classes
     const tdStatus = document.createElement('td');
     tdStatus.className = 'status';
     const statusBadge = document.createElement('span');
@@ -474,6 +519,7 @@ function renderOrders() {
     tdStatus.appendChild(statusBadge);
     tr.appendChild(tdStatus);
 
+    // Due Date with badges
     const tdDue = document.createElement('td');
     tdDue.style.textAlign = 'center';
     if (order.dueDate) {
@@ -486,24 +532,26 @@ function renderOrders() {
       else badge.classList.add('on-time');
 
       badge.textContent = date.toLocaleDateString().toUpperCase();
-
       tdDue.appendChild(badge);
     } else {
       tdDue.textContent = '-';
     }
     tr.appendChild(tdDue);
 
+    // Image thumbnail cell
     const tdImg = document.createElement('td');
     tdImg.className = 'image';
     if (order.imageUrl) {
       const img = document.createElement('img');
       img.src = order.imageUrl;
       img.alt = 'Preview';
+      img.style.cursor = 'pointer';
       img.onclick = () => window.open(order.imageUrl, '_blank');
       tdImg.appendChild(img);
     }
     tr.appendChild(tdImg);
 
+    // Actions (Edit/Delete)
     const tdActions = document.createElement('td');
     tdActions.className = 'actions';
 
@@ -517,7 +565,6 @@ function renderOrders() {
     delBtn.textContent = 'Delete';
     delBtn.onclick = () => deleteOrder(order.id);
 
-    // Disable buttons if archived
     if (tr.classList.contains('archived-row')) {
       editBtn.disabled = true;
       delBtn.disabled = true;
@@ -541,20 +588,22 @@ function renderOrders() {
 function loadOrderToForm(order) {
   docIdInput.value = order.id || '';
   teamNameInput.value = order.teamName || '';
-  teamNameInput.disabled = true; // disable editing
+  teamNameInput.disabled = true;
+
   tailorInput.value = order.tailor || '';
   artistInput.value = order.artist || '';
   tailorLowerInput.value = order.tailorLower || '';
+
+  // NEW: Load client fields
+  clientNameInput.value = order.clientName || '';
+  clientNoInput.value = order.clientNo || '';
+  clientURLInput.value = order.clientURL || '';
 
   statusRadios.forEach(r => r.checked = r.value === order.status);
 
   if (order.dueDate) {
     const parsed = new Date(order.dueDate);
-    if (!isNaN(parsed.getTime())) {
-      dueDateInput.value = parsed.toISOString().split('T')[0];
-    } else {
-      dueDateInput.value = '';
-    }
+    dueDateInput.value = isNaN(parsed.getTime()) ? '' : parsed.toISOString().split('T')[0];
   } else {
     dueDateInput.value = '';
   }
@@ -568,9 +617,9 @@ function loadOrderToForm(order) {
     imageUpload.value = '';
   }
 
-  // Change Save button to Update and show Cancel
   const saveBtn = form.querySelector('button[type="submit"]');
   saveBtn.textContent = 'Update';
+
   if (!document.getElementById('cancelBtn')) {
     const cancelBtn = document.createElement('button');
     cancelBtn.id = 'cancelBtn';
@@ -589,6 +638,8 @@ function loadOrderToForm(order) {
     saveBtn.insertAdjacentElement('afterend', cancelBtn);
   }
 }
+
+
 
 function sortOrders() {
   const priorityOrder = ['Received', 'On going', 'Finished', 'Released'];
@@ -640,6 +691,9 @@ form.addEventListener('submit', async e => {
   const id = docIdInput.value;
   const data = {
     teamName: teamNameInput.value.trim().toUpperCase(),
+	clientName: clientNameInput.value.trim().toUpperCase(),
+	clientNo: clientNoInput.value.trim().toUpperCase(),
+    clientURL: clientURLInput.value.trim().toLowerCase(),
     tailor: tailorInput.value.trim().toUpperCase(),
     artist: artistInput.value.trim().toUpperCase(),
     tailorLower: document.getElementById('tailorLower').value.trim().toUpperCase(),
@@ -734,6 +788,20 @@ exportBtn.addEventListener('click', () => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+});
+
+document.getElementById('clientNo').addEventListener('input', function () {
+  let val = this.value;
+
+  // Remove all chars except digits and plus
+  val = val.replace(/[^\d+]/g, '');
+
+  // Remove any '+' not at start
+  if (val.indexOf('+') > 0) {
+    val = val[0] + val.slice(1).replace(/\+/g, '');
+  }
+
+  this.value = val;
 });
 
 
