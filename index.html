@@ -4,9 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Order Form with Cloudinary & Firebase</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
     margin: 0;
     background-color: #f4f4f4;
     min-height: 100vh;
@@ -306,10 +307,9 @@
   flex: 1;
 }
 
-
 </style>
+
 </head>
-<body>
 <div id="loadingOverlay">Saving...</div>
 <!-- The rest of the HTML and JS will be appended next -->
 
@@ -451,6 +451,7 @@ const searchTeamInput = document.getElementById('searchTeam');
 const exportBtn = document.getElementById('exportBtn');
 const listContainer = document.getElementById('listContainer');
 const loadingOverlay = document.getElementById('loadingOverlay');
+const saveBtn = form.querySelector('button[type="submit"]');
 
 let orders = [], filteredOrders = [], displayLimit = 15;
 let tailorSet = new Set(), artistSet = new Set(), tailorLowerSet = new Set();
@@ -679,7 +680,6 @@ function renderOrders() {
 
 
 
-
 function loadOrderToForm(order) {
   docIdInput.value = order.id || '';
   teamNameInput.value = order.teamName || '';
@@ -732,6 +732,7 @@ function loadOrderToForm(order) {
     saveBtn.insertAdjacentElement('afterend', cancelBtn);
   }
 }
+
 
 
 
@@ -803,8 +804,19 @@ form.addEventListener('submit', async e => {
     alert('Error saving order: ' + err.message);
   } finally {
     loadingOverlay.style.display = 'none';
-    form.reset(); previewImg.src = ''; previewImg.style.display = 'none';
-    fetchOrders();
+    //form.reset(); previewImg.src = ''; previewImg.style.display = 'none';
+	
+	form.reset();
+    docIdInput.value = '';
+    teamNameInput.disabled = false;
+    previewImg.src = '';
+    previewImg.style.display = 'none';
+    saveBtn.textContent = 'Save';
+
+    const cancelBtn = document.getElementById('cancelBtn');
+    if (cancelBtn) cancelBtn.remove();
+	
+	fetchOrders();
   }
 });
 
@@ -905,6 +917,14 @@ window.addEventListener('scroll', () => {
   }
 });
 
+// Auto-uppercase all text inputs except URL and file inputs
+document.querySelectorAll('input[type="text"]').forEach(input => {
+  if (input.id !== 'clientURL' && input.id !== 'imageUpload') {
+    input.addEventListener('input', () => {
+      input.value = input.value.toUpperCase();
+    });
+  }
+});
 
 
 fetchOrders();
