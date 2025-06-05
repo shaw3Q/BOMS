@@ -3,292 +3,374 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Orders + Image Carousels</title>
+  <title>Firebase Carousel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
   <style>
-body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
-  min-height: 100vh;
-  /* Remove flexbox centering */
-  display: block;
-}
-
-
-.container {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  width: 100vw;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-}
-
-.list-container {
-  flex: 0 0 30%; /* fixed 30% width */
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  overflow-x: auto;
-  min-width: 250px; /* optional minimum */
-}
-
-    .list-container {
-      overflow-x: auto;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
     }
 
-.image-column {
-  flex: 1 1 70%; /* fill remaining 70% */
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 300px; /* optional minimum */
-}
-
-    .carousel-box h3 {
-      text-align: center;
-      margin: 0 0 10px;
-      font-size: 1.2em;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 5px;
-	    margin-bottom: 20px; /* adds space below each box */
+    body {
+      background: #000;
+      overflow-x: hidden;
     }
 
-    .carousel-track-wrapper {
+    .carousel {
+      width: 80vw;
+      height: 80vh;
+      margin: 5vh auto;
+      position: relative;
+      border-radius: 20px;
+      background: #111;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
       overflow: hidden;
-      width: 100%;
     }
 
-.carousel-track {
-  display: flex;
-  gap: 20px;
-  animation: scrollCarousel 27s linear infinite; /* was 30s */
-}
+    .carousel .list {
+      position: relative;
+      height: 100%;
+    }
 
-    .carousel-track img {
-      height: 300px;
-      width: 300px;
-      flex-shrink: 0;
-      object-fit: cover;
+    .carousel .item {
+      width: 200px;
+      height: 280px;
+      position: absolute;
+      top: 70%;
+      transform: translateY(-60%);
+      left: 70%;
+      border-radius: 20px;
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-color: #000;
+      z-index: 100;
+      transition: 1s;
+    }
+
+    .carousel .item:nth-child(1),
+    .carousel .item:nth-child(2) {
+      top: 0;
+      left: 0;
+      transform: none;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      box-shadow: none;
+    }
+
+    .carousel .item:nth-child(3) { left: 67%; }
+    .carousel .item:nth-child(4) { left: calc(67% + 220px); }
+    .carousel .item:nth-child(5) { left: calc(67% + 440px); }
+    .carousel .item:nth-child(6) { left: calc(67% + 660px); }
+    .carousel .item:nth-child(n+7) { left: calc(67% + 880px); opacity: 0; }
+
+    .item .content {
+      position: absolute;
+      top: 50%;
+      left: 50px;
+      transform: translateY(-50%);
+      width: 400px;
+      color: #fff;
+      text-align: left;
+      display: none;
+      padding: 30px;
+      border-radius: 16px;
+      
+    }
+
+    .item:nth-child(1) .content,
+    .item:nth-child(2) .content {
+      display: block;
+    }
+
+    .content .title {
+      font-size: 50px;
+      color: #14ff72cb;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px #000;
+      opacity: 0;
+      animation: fadeIn 1s ease-in-out 0.3s forwards;
+    }
+
+    .content .name {
+      font-size: 30px;
+      font-weight: bold;
+      margin-top: 10px;
+      text-shadow: 2px 2px 4px #000;
+      opacity: 0;
+      animation: fadeIn 1s ease-in-out 0.6s forwards;
+    }
+
+    .content .status {
+      font-size: 24px;
+      margin-top: 8px;
+      font-style: italic;
+      color: #ffb347;
+      text-shadow: 1px 1px 2px #000;
+      opacity: 0;
+      animation: fadeIn 1s ease-in-out 0.9s forwards;
+    }
+
+    .content .btn {
+      margin-top: 20px;
+      opacity: 0;
+      animation: fadeIn 1s ease-in-out 1.2s forwards;
+    }
+
+    .content .btn button {
+      padding: 10px 20px;
+      margin-right: 10px;
+      border: 2px solid #fff;
+      background: transparent;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    .content .btn button:last-child {
+      color: #14ff72cb;
+    }
+
+    .content .btn button:last-child:hover {
+      background-color: #14ff72cb;
+      color: #fff;
+      border-color: #14ff72cb;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(100px);
+        filter: blur(33px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    .arrows {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      gap: 10px;
+    }
+
+    .arrows button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #14ff72cb;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .pause-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #14ff72cb;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      font-size: 16px;
       border-radius: 10px;
       cursor: pointer;
-      transition: transform 0.2s ease;
+      z-index: 1000;
     }
 
-    .carousel-track img:hover {
-      transform: scale(1.05);
+    .timeRunning {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background-color: #14ff72cb;
+      width: 0%;
+      animation: runningTime 7s linear forwards;
+      z-index: 1000;
     }
 
-    @keyframes scrollCarousel {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      table-layout: auto;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-      vertical-align: middle;
-    }
-
-    td.status[data-status="Received"] { background-color: #007bff; color: white; }
-    td.status[data-status="On going"] { background-color: #ffc107; color: black; }
-    td.status[data-status="Finished"] { background-color: #28a745; color: white; }
-    td.status[data-status="Released"] { background-color: #6c757d; color: white; }
-
-    td.image img {
-      max-width: 80px;
-      cursor: pointer;
-      border-radius: 4px;
+    @keyframes runningTime {
+      from { width: 0%; }
+      to { width: 100%; }
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <!-- LEFT: Orders List -->
-  <div class="list-container">
-    <h2>Orders</h2>
-    <input type="text" id="searchTeam" placeholder="Search team name..." />
-    <button id="loadMoreBtn">Load More</button>
-    <table id="ordersTable" aria-label="Orders list">
-      <thead>
-        <tr>
-          <th>Team</th>
-          <th>Tailor</th>
-          <th>Artist</th>
-          <th>Status</th>
-          <th>Due Date</th>
-          <th>Image</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+<div class="carousel">
+  <div class="list"></div>
+
+  <div class="arrows">
+    <button class="prev">&#10094;</button>
+    <button class="next">&#10095;</button>
   </div>
 
-  <!-- RIGHT: Image Carousels -->
-  <div class="image-column">
-    <div class="carousel-box">
-      <h3>Finished</h3>
-      <div class="carousel-track-wrapper">
-        <div id="finishedCarousel" class="carousel-track"></div>
-      </div>
-    </div>
-    <div class="carousel-box">
-      <h3>On Going</h3>
-      <div class="carousel-track-wrapper">
-        <div id="onGoingCarousel" class="carousel-track"></div>
-      </div>
-    </div>
-	
-  </div>
+  <button class="pause-toggle" id="pauseToggle">Pause</button>
+  <div class="timeRunning" id="timeBar"></div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-<script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyCWCUiCICoraIkT6QawtM18WenCzm4tBPI",
     authDomain: "boms-c7893.firebaseapp.com",
     projectId: "boms-c7893",
-    storageBucket: "boms-c7893.firebasestorage.app",
+    storageBucket: "boms-c7893.appspot.com",
     messagingSenderId: "388757655613",
     appId: "1:388757655613:web:aedd6ba996520d8739da54"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  const searchTeamInput = document.getElementById('searchTeam');
-  const loadMoreBtn = document.getElementById('loadMoreBtn');
-  const ordersTableBody = document.querySelector('#ordersTable tbody');
+  const list = document.querySelector('.list');
+  const nextBtn = document.querySelector('.next');
+  const prevBtn = document.querySelector('.prev');
+  const pauseBtn = document.getElementById('pauseToggle');
+  const timeBar = document.getElementById('timeBar');
+  const carousel = document.querySelector('.carousel');
 
-  let orders = [];
+  const slideDuration = 7000;
+  let autoSlideTimer, mouseIdleTimer;
+  let isPaused = false;
   let filteredOrders = [];
-  let displayLimit = 15;
 
-  function renderOrders() {
-    ordersTableBody.innerHTML = '';
-    let count = 0;
-    for (const order of filteredOrders) {
-      if (count++ >= displayLimit) break;
-      const tr = document.createElement('tr');
-
-      tr.innerHTML = `
-        <td>${order.teamName}</td>
-        <td>${order.tailor || ''}</td>
-        <td>${order.artist || ''}</td>
-        <td class="status" data-status="${order.status}">${order.status}</td>
-        <td>${order.dueDate ? new Date(order.dueDate).toLocaleDateString() : ''}</td>
-        <td class="image">${order.imageUrl ? `<img src="${order.imageUrl}" alt="Order Image" onclick="window.open('${order.imageUrl}', '_blank')">` : '-'}</td>
-      `;
-
-      ordersTableBody.appendChild(tr);
-    }
-    loadMoreBtn.style.display = filteredOrders.length > displayLimit ? 'inline-block' : 'none';
+  function showSlide(dir) {
+    const items = document.querySelectorAll('.item');
+    if (dir === 'next') list.appendChild(items[0]);
+    else list.prepend(items[items.length - 1]);
+    resetTimeBar();
   }
 
-  function renderCarousels() {
-    const finishedEl = document.getElementById('finishedCarousel');
-    const ongoingEl = document.getElementById('onGoingCarousel');
-    finishedEl.innerHTML = '';
-    ongoingEl.innerHTML = '';
-
-    const finished = filteredOrders.filter(o => o.status === 'Finished' && o.imageUrl).slice(0, 10);
-    const ongoing = filteredOrders.filter(o => o.status === 'On going' && o.imageUrl).slice(0, 10);
-
-    [...finished, ...finished].forEach(order => {
-      const img = document.createElement('img');
-      img.src = order.imageUrl;
-      img.alt = `Finished - ${order.teamName}`;
-      img.title = order.teamName;
-      img.addEventListener('click', () => window.open(order.imageUrl, '_blank'));
-      finishedEl.appendChild(img);
-    });
-
-    [...ongoing, ...ongoing].forEach(order => {
-      const img = document.createElement('img');
-      img.src = order.imageUrl;
-      img.alt = `Ongoing - ${order.teamName}`;
-      img.title = order.teamName;
-      img.addEventListener('click', () => window.open(order.imageUrl, '_blank'));
-      ongoingEl.appendChild(img);
-    });
+  function resetTimeBar() {
+    timeBar.style.animation = 'none';
+    void timeBar.offsetWidth;
+    timeBar.style.animation = isPaused ? 'none' : 'runningTime 7s linear forwards';
   }
 
-  const originalRenderOrders = renderOrders;
-  renderOrders = function () {
-    originalRenderOrders();
-    renderCarousels();
-  }
-
-  async function fetchOrders() {
-    try {
-      const snapshot = await db.collection('orders').get();
-      orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      const statusPriority = {
-        "Received": 1,
-        "On going": 2,
-        "Finished": 3,
-        "Released": 4
-      };
-
-      orders.sort((a, b) => {
-        const dateA = new Date(a.dueDate || 0);
-        const dateB = new Date(b.dueDate || 0);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateB - dateA;
-        }
-        return (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99);
-      });
-
-      filteredOrders = [...orders];
-      renderOrders();
-    } catch (error) {
-      console.error("Error fetching orders:", error);
+  function startAutoSlide() {
+    if (!isPaused) {
+      autoSlideTimer = setTimeout(() => {
+        showSlide('next');
+        startAutoSlide();
+      }, slideDuration);
+      resetTimeBar();
     }
   }
 
-  function filterOrders() {
-    const searchTerm = searchTeamInput.value.trim().toLowerCase();
-    filteredOrders = orders.filter(o => o.teamName.toLowerCase().includes(searchTerm));
-    displayLimit = 15;
-    renderOrders();
+  function stopAutoSlide() {
+    clearTimeout(autoSlideTimer);
+    resetTimeBar();
   }
 
-  searchTeamInput.addEventListener('input', filterOrders);
-  loadMoreBtn.addEventListener('click', () => {
-    displayLimit += 15;
-    renderOrders();
+  nextBtn.onclick = () => { showSlide('next'); stopAutoSlide(); startAutoSlide(); };
+  prevBtn.onclick = () => { showSlide('prev'); stopAutoSlide(); startAutoSlide(); };
+
+  carousel.addEventListener('mousemove', () => {
+    stopAutoSlide();
+    clearTimeout(mouseIdleTimer);
+    mouseIdleTimer = setTimeout(() => {
+      if (!isPaused) startAutoSlide();
+    }, 3000);
   });
 
-  fetchOrders();
-  setInterval(fetchOrders, 300000); // auto-refresh every 5 minutes
+  pauseBtn.onclick = () => {
+    isPaused = !isPaused;
+    pauseBtn.innerText = isPaused ? 'Play' : 'Pause';
+    if (isPaused) stopAutoSlide();
+    else startAutoSlide();
+  };
+
+  function normalizeStatus(s) {
+    return (s || '').toLowerCase().trim();
+  }
+
+  function sortOrders(orders) {
+    const priorityOrder = ['Received', 'On going', 'Finished', 'Released'].map(s => s.toLowerCase());
+
+    orders.sort((a, b) => {
+      const dateA = a.dueDate ? new Date(a.dueDate) : new Date(8640000000000000);
+      const dateB = b.dueDate ? new Date(b.dueDate) : new Date(8640000000000000);
+      const statusA = normalizeStatus(a.status);
+      const statusB = normalizeStatus(b.status);
+
+      const dateDiff = dateA - dateB;
+      if (dateDiff !== 0) return dateDiff;
+
+      const idxA = priorityOrder.indexOf(statusA) !== -1 ? priorityOrder.indexOf(statusA) : 999;
+      const idxB = priorityOrder.indexOf(statusB) !== -1 ? priorityOrder.indexOf(statusB) : 999;
+
+      return idxA - idxB;
+    });
+  }
+
+  async function fetchOrdersFromFirestore() {
+    const snapshot = await db.collection("orders").get();
+    filteredOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    loadSlides();
+  }
+
+async function loadSlides() {
+  list.innerHTML = '';
+
+  const relevantOrders = filteredOrders.filter(order => {
+    const status = normalizeStatus(order.status);
+    return status === 'on going' || status === 'finished';
+  });
+
+  sortOrders(relevantOrders);
+
+  for (const order of relevantOrders) {
+    const item = document.createElement('div');
+    item.className = 'item';
+    item.style.backgroundImage = `url(${order.imageUrl || ''})`;
+
+    const content = document.createElement('div');
+    content.className = 'content';
+
+    const title = document.createElement('div');
+    title.className = 'title';
+    title.textContent = order.teamName || '';
+
+    const status = document.createElement('div');
+    status.className = 'status';
+    status.textContent = (order.status || '').toUpperCase();
+
+    content.appendChild(title);
+    content.appendChild(status);
+
+
+    item.appendChild(content);
+    list.appendChild(item);
+  }
+
+  // 👉 Move last item to the beginning
+  const items = list.querySelectorAll('.item');
+  if (items.length > 0) {
+    list.insertBefore(items[items.length - 1], items[0]);
+  }
+
+  startAutoSlide();
+}
+
+  
+  loadSlides();
+
+  // Load data on startup
+  fetchOrdersFromFirestore();
 </script>
+
 </body>
 </html>
